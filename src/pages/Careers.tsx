@@ -1,0 +1,77 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search } from "lucide-react";
+import { fetchPublishedCareers } from "@/lib/queries";
+import { CareerCard } from "@/components/cards/CareerCard";
+import { SEO } from "@/components/SEO";
+import { educationLabel, growthLabel } from "@/lib/format";
+import { EmptyState } from "@/components/EmptyState";
+
+const Careers = () => {
+  const [params, setParams] = useSearchParams();
+  const [q, setQ] = useState(params.get("q") ?? "");
+  const [industry, setIndustry] = useState("all");
+  const [growth, setGrowth] = useState("all");
+  const [edu, setEdu] = useState("all");
+  const { data: careers = [], isLoading } = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers });
+
+  useEffect(() => {
+    const t = setTimeout(() => setParams(p => { if (q) p.set("q", q); else p.delete("q"); return p; }, { replace: true }), 200);
+    return () => clearTimeout(t);
+  }, [q, setParams]);
+
+  const industries = useMemo(() => Array.from(new Set(careers.map(c => c.industry).filter(Boolean))) as string[], [careers]);
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return careers.filter(c => {
+      if (industry !== "all" && c.industry !== industry) return false;
+      if (growth !== "all" && c.growth_outlook !== growth) return false;
+      if (edu !== "all" && c.education_level !== edu) return false;
+      if (!term) return true;
+      const hay = `${c.title} ${c.short_description ?? ""} ${(c.skills ?? []).join(" ")} ${c.industry ?? ""}`.toLowerCase();
+      return hay.includes(term);
+    });
+  }, [careers, q, industry, growth, edu]);
+
+  return (
+    <>
+      <SEO title="Browse careers" description="Search hundreds of real careers. Filter by industry, growth outlook, and education level." path="/careers" />
+      <section className="border-b border-border/60 bg-surface">
+        <div className="container py-10">
+          <h1 className="text-3xl md:text-4xl font-bold">Careers</h1>
+          <p className="text-muted-foreground mt-1">Search by title, skill, or keyword.</p>
+          <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+            <div className="flex items-center gap-2 rounded-xl border border-input bg-background px-3">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search careers, skills, keywords" className="border-0 shadow-none focus-visible:ring-0" />
+            </div>
+            <Select value={industry} onValueChange={setIndustry}>
+              <SelectTrigger className="md:w-44"><SelectValue placeholder="Industry" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All industries</SelectItem>{industries.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={growth} onValueChange={setGrowth}>
+              <SelectTrigger className="md:w-44"><SelectValue placeholder="Growth" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All growth</SelectItem>{Object.entries(growthLabel).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={edu} onValueChange={setEdu}>
+              <SelectTrigger className="md:w-48"><SelectValue placeholder="Education" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All education</SelectItem>{Object.entries(educationLabel).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
+      <section className="container py-10">
+        <div className="mb-4 text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "career" : "careers"}</div>
+        {isLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-44 rounded-2xl bg-muted animate-pulse" />)}</div>
+        ) : filtered.length === 0 ? <EmptyState title="No careers match your filters" description="Try clearing a filter or searching for something else." /> : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(c => <CareerCard key={c.id} c={c} />)}</div>
+        )}
+      </section>
+    </>
+  );
+};
+export default Careers;
