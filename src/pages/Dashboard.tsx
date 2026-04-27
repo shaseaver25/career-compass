@@ -67,7 +67,7 @@ const Dashboard = () => {
         website: form.website.trim() || null,
         logo_emoji: form.logo_emoji.trim() || "🏢",
         owner_id: user.id,
-        ...(submitForReview ? { status: "pending_review" as const } : {}),
+        ...(submitForReview ? { status: "pending" as const } : {}),
       };
 
       if (companyId) {
@@ -77,7 +77,7 @@ const Dashboard = () => {
         const slug = `${slugify(form.name)}-${Math.random().toString(36).slice(2, 6)}`;
         const { data, error } = await supabase
           .from("companies")
-          .insert({ ...payload, slug, status: submitForReview ? "pending_review" : "draft" })
+          .insert({ ...payload, slug, status: submitForReview ? "pending" : "draft" })
           .select("id")
           .single();
         if (error) throw error;
@@ -108,10 +108,10 @@ const Dashboard = () => {
   };
 
   const statusLabel: Record<string, string> = {
-    draft: "Draft", pending_review: "Pending review", published: "Published", archived: "Archived",
+    draft: "Draft", pending: "Pending review", published: "Published", changes_requested: "Changes requested",
   };
   const statusVariant = (s?: string) =>
-    s === "published" ? "default" : s === "pending_review" ? "secondary" : "outline";
+    s === "published" ? "default" : s === "pending" ? "secondary" : "outline";
 
   return (
     <>
