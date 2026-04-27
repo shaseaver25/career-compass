@@ -21,27 +21,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rolesLoading, setRolesLoading] = useState(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setRolesLoading(true);
         setTimeout(() => {
           supabase.from("user_roles").select("role").eq("user_id", s.user.id).then(({ data }) => {
             setRoles((data ?? []).map(r => r.role as Role));
+            setRolesLoading(false);
           });
         }, 0);
       } else {
         setRoles([]);
+        setRolesLoading(false);
       }
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setRolesLoading(true);
         supabase.from("user_roles").select("role").eq("user_id", s.user.id).then(({ data }) => {
           setRoles((data ?? []).map(r => r.role as Role));
+          setRolesLoading(false);
           setLoading(false);
         });
       } else {
@@ -55,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      user, session, roles, loading,
+      user, session, roles, loading: loading || rolesLoading,
       isAdmin: roles.includes("admin"),
       isRep: roles.includes("company_rep") || roles.includes("admin"),
       signOut,
