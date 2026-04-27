@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/SEO";
 import { toast } from "sonner";
 import { Mail, Sparkles } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,10 @@ const Auth = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const redirect = params.get("redirect") ?? "/dashboard";
+  const { user, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (!authLoading && user) navigate(redirect, { replace: true });
+  }, [user, authLoading, redirect, navigate]);
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}${redirect}` } });
