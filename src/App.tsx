@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SiteLayout } from "@/components/layout/SiteLayout";
+import { RequireRole } from "@/components/RequireRole";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Careers from "./pages/Careers.tsx";
@@ -37,9 +38,9 @@ const App = () => (
                 <Route path="/companies/:slug" element={<CompanyDetail />} />
                 <Route path="/bookmarks" element={<Bookmarks />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard/interviews/new" element={<InterviewNew />} />
-                <Route path="/admin" element={<Admin />} />
+                <Route path="/dashboard" element={<RequireRole role="company_rep"><Dashboard /></RequireRole>} />
+                <Route path="/dashboard/interviews/new" element={<RequireRole role="company_rep"><InterviewNew /></RequireRole>} />
+                <Route path="/admin" element={<RequireRole role="admin"><Admin /></RequireRole>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Route>
