@@ -15,25 +15,25 @@ const VB_H = 540;
 // into the same projection used by MN_OUTLINE_PATH (equirectangular fitted
 // to the silhouette region of the viewBox).
 const GREATER_POINTS: Record<string, { x: number; y: number }> = {
-  pine_to_prairie:  { x: 138.3, y: 128.8 }, // Thief River Falls
-  lakes_country:    { x: 156.1, y: 230.4 }, // Detroit Lakes
-  north_country:    { x: 208.4, y: 179.6 }, // Bemidji
-  true_north_stars: { x: 336.5, y: 177.3 }, // Virginia / Hibbing
-  runestone:        { x: 181.4, y: 303.9 }, // Alexandria
-  central_lakes:    { x: 245.0, y: 266.4 }, // Brainerd
-  pine_technical:   { x: 311.2, y: 307.8 }, // Pine City
-  lake_superior:    { x: 358.1, y: 233.6 }, // Duluth
-  mid_minnesota:    { x: 199.7, y: 363.3 }, // Willmar
-  great_river:      { x: 247.1, y: 328.9 }, // St. Cloud
-  minnesota_west:   { x: 169.6, y: 460.0 }, // Worthington (nudged off border)
-  south_central:    { x: 256.3, y: 438.4 }, // Mankato
-  riverland:        { x: 311.2, y: 460.0 }, // Austin (nudged off border)
-  rochester_zed:    { x: 338.7, y: 449.3 }, // Rochester
-  southeast:        { x: 382.9, y: 447.0 }, // Winona
+  pine_to_prairie:  { x: 138.5, y: 133.2 }, // Thief River Falls
+  lakes_country:    { x: 156.6, y: 236.8 }, // Detroit Lakes
+  north_country:    { x: 208.5, y: 185.0 }, // Bemidji
+  true_north_stars: { x: 334.6, y: 181.0 }, // Virginia / Hibbing
+  runestone:        { x: 181.7, y: 309.4 }, // Alexandria
+  central_lakes:    { x: 244.9, y: 272.8 }, // Brainerd
+  pine_technical:   { x: 311.3, y: 314.1 }, // Pine City
+  lake_superior:    { x: 357.8, y: 239.2 }, // Duluth
+  mid_minnesota:    { x: 199.6, y: 368.0 }, // Willmar
+  great_river:      { x: 247.0, y: 334.7 }, // St. Cloud
+  minnesota_west:   { x: 170.0, y: 470.0 }, // Worthington (nudged off border)
+  south_central:    { x: 255.8, y: 440.4 }, // Mankato
+  riverland:        { x: 311.0, y: 467.0 }, // Austin (nudged off border)
+  rochester_zed:    { x: 337.6, y: 451.1 }, // Rochester
+  southeast:        { x: 382.8, y: 449.0 }, // Winona
 };
 // Twin Cities geographic center on the silhouette (Mpls), used as start of
 // the dashed connector line to the Metro inset box.
-const METRO_ANCHOR = { x: 295.1, y: 374.3 };
+const METRO_ANCHOR = { x: 295.3, y: 379.0 };
 
 // Twin Cities Metro inset
 const METRO_BOX = { x: 600, y: 220, w: 260, h: 220 };
