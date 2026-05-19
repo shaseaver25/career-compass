@@ -24,6 +24,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [rolesLoading, setRolesLoading] = useState(false);
 
   useEffect(() => {
+    // If the URL contains an auth callback (magic link hash / OAuth code),
+    // Supabase is mid-flight parsing it. Don't let getSession()'s initial
+    // null result flip loading=false before SIGNED_IN fires.
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const hasAuthCallback =
+      hash.includes("access_token") ||
+      hash.includes("error") ||
+      /[?&]code=/.test(search);
+    let resolved = false;
+    const markResolved = () => {
+      if (!resolved) {
+        resolved = true;
+        setLoading(false);
+      }
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       setUser(s?.user ?? null);
@@ -39,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setRolesLoading(false);
       }
+      markResolved();
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
@@ -48,13 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("user_roles").select("role").eq("user_id", s.user.id).then(({ data }) => {
           setRoles((data ?? []).map(r => r.role as Role));
           setRolesLoading(false);
-          setLoading(false);
+          markResolved();
         });
-      } else {
-        setLoading(false);
+      } else if (!hasAuthCallback) {
+        markResolved();
       }
+      // If we have an auth callback in the URL and no session yet,
+      // wait for onAuthStateChange to flip resolved.
     });
+    // Safety net: never hang forever.
+    const timeout = setTimeout(markResolved, 4000);
     return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signOut = async () => { await supabase.auth.signOut(); };
