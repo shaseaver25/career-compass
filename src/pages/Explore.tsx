@@ -26,7 +26,7 @@ const Explore = () => {
             Minnesota's 23 Perkins CTE consortia coordinate career and technical education across the state.
             Click a region to see the companies and careers students can explore locally.
           </p>
-          <div className="mt-6 mx-auto max-w-3xl">
+          <div className="mt-6 mx-auto max-w-5xl">
             <MnConsortiaMap />
           </div>
         </div>
