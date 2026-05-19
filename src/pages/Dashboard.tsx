@@ -243,10 +243,9 @@ const Dashboard = () => {
 
       <Dialog open={needsOnboarding}>
         <DialogContent
-          className="sm:max-w-lg"
+          className="sm:max-w-lg [&>button.absolute]:hidden"
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
-          hideClose
         >
           <DialogHeader>
             <div className="grid h-11 w-11 place-items-center rounded-xl gradient-hero text-primary-foreground mb-2">
