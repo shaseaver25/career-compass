@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
-import { fetchPublishedCareers } from "@/lib/queries";
+import { fetchPublishedCareers, fetchPublishedCareersByCluster } from "@/lib/queries";
 import { CareerCard } from "@/components/cards/CareerCard";
 import { SEO } from "@/components/SEO";
 import { educationLabel, growthLabel } from "@/lib/format";
@@ -16,17 +16,31 @@ const Careers = () => {
   const [industry, setIndustry] = useState("all");
   const [growth, setGrowth] = useState("all");
   const [edu, setEdu] = useState("all");
-  const { data: careers = [], isLoading } = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers });
+  const clusterSlug = params.get("cluster");
+  const allCareersQuery = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers, enabled: !clusterSlug });
+  const clusterQuery = useQuery({
+    queryKey: ["careers", "cluster", clusterSlug],
+    queryFn: () => fetchPublishedCareersByCluster(clusterSlug as string),
+    enabled: !!clusterSlug,
+  });
+  const unknownCluster = !!clusterSlug && clusterQuery.data?.unknownCluster === true;
+  const careers = clusterSlug
+    ? (unknownCluster ? (allCareersQuery.data ?? []) : (clusterQuery.data?.careers ?? []))
+    : (allCareersQuery.data ?? []);
+  const isLoading = clusterSlug ? clusterQuery.isLoading : allCareersQuery.isLoading;
+  // If unknown cluster, fall back to all careers
+  const fallbackQuery = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers, enabled: unknownCluster });
+  const careersList = unknownCluster ? (fallbackQuery.data ?? []) : careers;
 
   useEffect(() => {
     const t = setTimeout(() => setParams(p => { if (q) p.set("q", q); else p.delete("q"); return p; }, { replace: true }), 200);
     return () => clearTimeout(t);
   }, [q, setParams]);
 
-  const industries = useMemo(() => Array.from(new Set(careers.map(c => c.industry).filter(Boolean))) as string[], [careers]);
+  const industries = useMemo(() => Array.from(new Set(careersList.map((c: any) => c.industry).filter(Boolean))) as string[], [careersList]);
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return careers.filter(c => {
+    return careersList.filter((c: any) => {
       if (industry !== "all" && c.industry !== industry) return false;
       if (growth !== "all" && c.growth_outlook !== growth) return false;
       if (edu !== "all" && c.education_level !== edu) return false;
@@ -34,7 +48,7 @@ const Careers = () => {
       const hay = `${c.title} ${c.short_description ?? ""} ${(c.skills ?? []).join(" ")} ${c.industry ?? ""}`.toLowerCase();
       return hay.includes(term);
     });
-  }, [careers, q, industry, growth, edu]);
+  }, [careersList, q, industry, growth, edu]);
 
   return (
     <>
@@ -64,6 +78,17 @@ const Careers = () => {
         </div>
       </section>
       <section className="container py-10">
+        {clusterSlug && !unknownCluster && (
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs">
+            Filtered by cluster: <span className="font-semibold">{clusterSlug}</span>
+            <button onClick={() => setParams(p => { p.delete("cluster"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
+          </div>
+        )}
+        {unknownCluster && (
+          <div className="mb-4 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            Unknown cluster — showing all careers.
+          </div>
+        )}
         <div className="mb-4 text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "career" : "careers"}</div>
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-44 rounded-2xl bg-muted animate-pulse" />)}</div>
