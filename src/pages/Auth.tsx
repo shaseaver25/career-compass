@@ -8,6 +8,7 @@ import { SEO } from "@/components/SEO";
 import { toast } from "sonner";
 import { Loader2, Mail, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { lovable } from "@/integrations/lovable";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -36,6 +37,12 @@ const Auth = () => {
     setLoading(false);
     if (error) toast.error(error.message); else { setSent(true); toast.success("Check your email for the sign-in link"); }
   };
+  const onGoogle = async () => {
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}${redirect}`,
+    });
+    if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
+  };
   return (
     <>
       <SEO title="Sign in" description="Sign in to manage your company profile and interviews." path="/auth" />
@@ -51,6 +58,13 @@ const Auth = () => {
             </div>
           ) : (
             <form onSubmit={onSubmit} className="mt-6 space-y-4">
+              <Button type="button" variant="outline" className="w-full" onClick={onGoogle}>
+                Continue with Google
+              </Button>
+              <div className="relative my-2 text-center text-xs text-muted-foreground">
+                <span className="bg-card px-2 relative z-10">or</span>
+                <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
+              </div>
               <div><Label htmlFor="email">Email</Label><Input id="email" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" /></div>
               <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending…" : "Send magic link"}</Button>
               <p className="text-xs text-muted-foreground">Browsing? You don't need an account. Sign-in is for company reps and admins.</p>
