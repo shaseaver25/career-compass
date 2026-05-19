@@ -50,11 +50,22 @@ const Auth = () => {
       setLoading(false);
       if (error) toast.error(error.message);
       else toast.success("Account created. Signing you in…");
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setLoading(false);
-      if (error) toast.error(error.message);
+      return;
     }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error && /invalid login credentials/i.test(error.message)) {
+      // No account yet — auto-create one with the same password.
+      const { error: signUpErr } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: `${window.location.origin}${redirect}` },
+      });
+      setLoading(false);
+      if (signUpErr) toast.error(signUpErr.message);
+      else toast.success("Account created. Signing you in…");
+      return;
+    }
+    setLoading(false);
+    if (error) toast.error(error.message);
   };
   const onGoogle = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
