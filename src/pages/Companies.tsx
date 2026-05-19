@@ -1,17 +1,30 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
-import { fetchPublishedCompanies } from "@/lib/queries";
+import { fetchPublishedCompanies, fetchConsortiumMembership } from "@/lib/queries";
 import { CompanyCard } from "@/components/cards/CompanyCard";
 import { SEO } from "@/components/SEO";
 import { EmptyState } from "@/components/EmptyState";
 
 const Companies = () => {
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState("");
   const [industry, setIndustry] = useState("all");
   const [location, setLocation] = useState("all");
+  const consortiumCode = params.get("consortium");
+  const consortiumQuery = useQuery({
+    queryKey: ["consortium-membership", consortiumCode],
+    queryFn: () => fetchConsortiumMembership(consortiumCode as string),
+    enabled: !!consortiumCode,
+  });
+  const consortiumCompanyIdSet = useMemo(
+    () => new Set((consortiumQuery.data?.companyIds ?? []) as string[]),
+    [consortiumQuery.data]
+  );
+  const consortiumName = consortiumQuery.data?.consortium?.name ?? null;
   const { data: companies = [], isLoading } = useQuery({ queryKey: ["companies"], queryFn: fetchPublishedCompanies });
   const industries = useMemo(() => Array.from(new Set(companies.map(c => c.industry).filter(Boolean))) as string[], [companies]);
   const locations = useMemo(() => Array.from(new Set(companies.map(c => [c.city, c.state].filter(Boolean).join(", ")).filter(Boolean))), [companies]);
@@ -21,10 +34,11 @@ const Companies = () => {
       if (industry !== "all" && c.industry !== industry) return false;
       const loc = [c.city, c.state].filter(Boolean).join(", ");
       if (location !== "all" && loc !== location) return false;
+      if (consortiumCode && !consortiumCompanyIdSet.has(c.id)) return false;
       if (!term) return true;
       return `${c.name} ${c.industry ?? ""} ${loc} ${c.description ?? ""}`.toLowerCase().includes(term);
     });
-  }, [companies, q, industry, location]);
+  }, [companies, q, industry, location, consortiumCode, consortiumCompanyIdSet]);
   return (
     <>
       <SEO title="Browse companies" description="Discover local companies that hire for the careers you care about." path="/companies" />
@@ -38,6 +52,12 @@ const Companies = () => {
         </div>
       </div></section>
       <section className="container py-10">
+        {consortiumCode && (
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs">
+            Region: <span className="font-semibold">{consortiumName ?? consortiumCode}</span>
+            <button onClick={() => setParams(p => { p.delete("consortium"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
+          </div>
+        )}
         <div className="mb-4 text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "company" : "companies"}</div>
         {isLoading ? (<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-44 rounded-2xl bg-muted animate-pulse" />)}</div>) : filtered.length === 0 ? <EmptyState title="No companies match your search" /> : (<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{filtered.map(c => <CompanyCard key={c.id} c={c} />)}</div>)}
       </section>
