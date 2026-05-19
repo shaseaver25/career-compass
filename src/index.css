@@ -31,6 +31,9 @@ All colors MUST be HSL.
     --muted: 200 20% 96%;
     --muted-foreground: 200 12% 42%;
 
+    --map-state: 198 24% 86%;
+    --map-state-border: 198 18% 68%;
+
     --accent: 38 95% 55%;
     --accent-foreground: 30 50% 12%;
 
@@ -88,6 +91,8 @@ All colors MUST be HSL.
     --secondary-foreground: 160 15% 95%;
     --muted: 200 20% 14%;
     --muted-foreground: 200 10% 65%;
+    --map-state: 198 22% 22%;
+    --map-state-border: 198 18% 38%;
     --accent: 38 95% 60%;
     --accent-foreground: 30 50% 12%;
     --destructive: 0 70% 50%;

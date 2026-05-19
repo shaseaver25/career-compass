@@ -162,8 +162,8 @@ export function MnConsortiaMap({ size }: MnConsortiaMapProps) {
 
           {/* Real MN state boundary (GeoJSON-derived) */}
           <path d={MN_OUTLINE_PATH}
-                fill="hsl(var(--muted))"
-                stroke="hsl(var(--border))" strokeWidth={1}
+                fill="hsl(var(--map-state))"
+                stroke="hsl(var(--map-state-border))" strokeWidth={1.4}
                 strokeLinejoin="round" strokeLinecap="round" />
 
           {/* Connector from Twin Cities geographic spot to inset box */}
