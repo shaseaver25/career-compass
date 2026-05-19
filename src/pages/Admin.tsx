@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Check, ExternalLink, Loader2, X } from "lucide-react";
+import { Check, ExternalLink, Loader2, Pencil, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { CareerFormDialog, type CareerEditing } from "@/components/admin/CareerFormDialog";
 
 type Status = "draft" | "pending" | "published" | "changes_requested";
 
@@ -25,6 +26,8 @@ const StatusBadge = ({ s }: { s: Status }) => {
 
 const Admin = () => {
   const qc = useQueryClient();
+  const [careerDialogOpen, setCareerDialogOpen] = useState(false);
+  const [careerEditing, setCareerEditing] = useState<CareerEditing>(null);
 
   const companies = useQuery({
     queryKey: ["admin-companies-pending"],
@@ -52,10 +55,23 @@ const Admin = () => {
     },
   });
 
+  const adminCareers = useQuery({
+    queryKey: ["admin-careers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("careers")
+        .select("id, slug, title, status, industry, tech_tags, primary_cluster_id, updated_at, acte_clusters!careers_primary_cluster_id_fkey(id, name, acte_cluster_groupings(name, color_hex))")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const counts = useMemo(() => ({
     companies: companies.data?.length ?? 0,
     interviews: interviews.data?.length ?? 0,
-  }), [companies.data, interviews.data]);
+    careers: adminCareers.data?.length ?? 0,
+  }), [companies.data, interviews.data, adminCareers.data]);
 
   const moderate = async (
     table: "companies" | "interviews",
@@ -81,6 +97,7 @@ const Admin = () => {
           <TabsList>
             <TabsTrigger value="companies">Companies <Badge variant="secondary" className="ml-2">{counts.companies}</Badge></TabsTrigger>
             <TabsTrigger value="interviews">Interviews <Badge variant="secondary" className="ml-2">{counts.interviews}</Badge></TabsTrigger>
+            <TabsTrigger value="careers">Careers <Badge variant="secondary" className="ml-2">{counts.careers}</Badge></TabsTrigger>
           </TabsList>
 
           <TabsContent value="companies" className="mt-6">
@@ -168,8 +185,79 @@ const Admin = () => {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="careers" className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">All careers in the catalog. Tag each with a primary ACTE cluster.</p>
+              <Button size="sm" onClick={() => { setCareerEditing(null); setCareerDialogOpen(true); }}>
+                <Plus className="mr-1 h-4 w-4" /> New career
+              </Button>
+            </div>
+            {adminCareers.isLoading ? (
+              <div className="grid place-items-center py-16"><Loader2 className="animate-spin text-muted-foreground" /></div>
+            ) : counts.careers === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">No careers yet — create one to start the catalog.</div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-4 py-2.5 font-medium">Title</th>
+                      <th className="text-left px-4 py-2.5 font-medium">Cluster</th>
+                      <th className="text-left px-4 py-2.5 font-medium">Tech tags</th>
+                      <th className="text-left px-4 py-2.5 font-medium">Status</th>
+                      <th className="px-4 py-2.5" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(adminCareers.data ?? []).map((c: any) => {
+                      const cluster = c.acte_clusters;
+                      const color = cluster?.acte_cluster_groupings?.color_hex;
+                      const tags: string[] = c.tech_tags ?? [];
+                      const isUntagged = c.status === "published" && !c.primary_cluster_id;
+                      return (
+                        <tr key={c.id} className="border-t border-border align-top">
+                          <td className="px-4 py-3 font-medium">
+                            {c.title}
+                            <div className="text-xs text-muted-foreground">{c.slug}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {cluster ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                                {cluster.name}
+                              </span>
+                            ) : isUntagged ? (
+                              <Badge variant="destructive">Untagged</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {tags.length === 0 ? <span className="text-muted-foreground">—</span> : (
+                              <div className="flex flex-wrap gap-1">
+                                {tags.slice(0, 3).map(t => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
+                                {tags.length > 3 && <Badge variant="outline" className="text-xs">+{tags.length - 3} more</Badge>}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3"><StatusBadge s={c.status} /></td>
+                          <td className="px-4 py-3 text-right">
+                            <Button size="sm" variant="ghost" onClick={() => { setCareerEditing(c); setCareerDialogOpen(true); }}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </section>
+      <CareerFormDialog open={careerDialogOpen} onOpenChange={setCareerDialogOpen} editing={careerEditing} />
     </>
   );
 };
