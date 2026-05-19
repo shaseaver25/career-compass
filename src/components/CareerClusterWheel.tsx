@@ -256,18 +256,38 @@ export function CareerClusterWheel({
           );
         })}
 
-        {/* Center disc */}
-        <circle cx={cx} cy={cy} r={rCenter} fill="hsl(var(--card, 0 0% 100%))" stroke={OUTER_NAVY} strokeWidth={1.5} />
-        {/* Minnesota-ish silhouette: rough rectangle + notch hint */}
-        <g transform={`translate(${cx - 14} ${cy - 30})`} fill={OUTER_NAVY} opacity={0.85}>
-          <path d="M2 0 L24 0 L26 6 L28 10 L26 18 L24 26 L20 30 L18 34 L12 34 L8 30 L4 28 L0 22 L2 12 Z" />
-        </g>
-        <text x={cx} y={cy + 16} textAnchor="middle" fontSize="11" fontWeight={500} fill="hsl(var(--foreground, 0 0% 10%))">
-          Career-Ready
-        </text>
-        <text x={cx} y={cy + 30} textAnchor="middle" fontSize="11" fontWeight={500} fill="hsl(var(--foreground, 0 0% 10%))">
-          Practices
-        </text>
+        {/* Center hub: white disc + MN silhouette + Career-Ready Practices label */}
+        {(() => {
+          // MN outline path (native bounds ~ x:55-545, y:40-480 → 490×440)
+          const MN_PATH =
+            "M 90 40 L 130 40 L 130 70 L 470 70 L 480 95 L 500 110 L 530 150 L 545 200 L 510 235 L 470 270 L 445 305 L 425 345 L 460 380 L 450 430 L 470 480 L 90 480 L 60 470 L 55 380 L 60 280 L 70 180 L 80 90 Z";
+          const NATIVE_W = 490, NATIVE_H = 440, NATIVE_CX = 300, NATIVE_CY = 260;
+          // Fit silhouette inside the center disc with a small margin.
+          const scale = (rCenter * 1.55) / NATIVE_W;
+          const tx = cx - NATIVE_CX * scale;
+          const ty = cy - NATIVE_CY * scale;
+          return (
+            <g aria-hidden>
+              <title>Career-Ready Practices — Minnesota</title>
+              <circle cx={cx} cy={cy} r={rCenter}
+                      fill="hsl(var(--card, 0 0% 100%))"
+                      stroke={OUTER_NAVY} strokeWidth={1.5} />
+              <g transform={`translate(${tx} ${ty}) scale(${scale})`} fill={OUTER_NAVY}>
+                <path d={MN_PATH} strokeLinejoin="round" />
+              </g>
+              <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="central"
+                    fontSize="13" fontWeight={700} fill="white"
+                    style={{ pointerEvents: "none" }}>
+                Career-Ready
+              </text>
+              <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="central"
+                    fontSize="13" fontWeight={700} fill="white"
+                    style={{ pointerEvents: "none" }}>
+                Practices
+              </text>
+            </g>
+          );
+        })()}
       </svg>
 
       {/* Detail panel */}
