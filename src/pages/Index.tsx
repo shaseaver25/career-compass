@@ -8,6 +8,7 @@ import { fetchPublishedCareers, fetchPublishedCompanies } from "@/lib/queries";
 import { CareerCard } from "@/components/cards/CareerCard";
 import { CompanyCard } from "@/components/cards/CompanyCard";
 import { SEO } from "@/components/SEO";
+import { CareerClusterWheel } from "@/components/CareerClusterWheel";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -57,6 +58,20 @@ const Index = () => {
                 <Link to="/companies"><Building2 className="mr-2 h-4 w-4" />Browse companies</Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-border/60 bg-surface">
+        <div className="container py-16">
+          <div className="mb-6 max-w-2xl">
+            <h2 className="text-2xl md:text-3xl font-bold">Explore careers by cluster</h2>
+            <p className="text-muted-foreground mt-1">
+              The new 2024 ACTE Career Clusters framework. Click a wedge to see careers in that cluster posted by MN employers.
+            </p>
+          </div>
+          <div className="mx-auto max-w-2xl">
+            <CareerClusterWheel />
           </div>
         </div>
       </section>
