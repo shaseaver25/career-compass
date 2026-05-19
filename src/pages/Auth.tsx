@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/SEO";
 import { toast } from "sonner";
-import { Mail, Sparkles } from "lucide-react";
+import { Loader2, Mail, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Auth = () => {
@@ -17,9 +17,19 @@ const Auth = () => {
   const navigate = useNavigate();
   const redirect = params.get("redirect") ?? "/dashboard";
   const { user, loading: authLoading } = useAuth();
+  const processingCallback =
+    typeof window !== "undefined" &&
+    (window.location.hash.includes("access_token") || /[?&]code=/.test(window.location.search));
   useEffect(() => {
     if (!authLoading && user) navigate(redirect, { replace: true });
   }, [user, authLoading, redirect, navigate]);
+  if (authLoading || processingCallback) {
+    return (
+      <section className="container py-32 grid place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </section>
+    );
+  }
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}${redirect}` } });
