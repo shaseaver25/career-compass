@@ -3,11 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 export async function fetchPublishedCareers() {
   const { data, error } = await supabase
     .from("careers")
-    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_cluster:acte_clusters!careers_primary_cluster_id_fkey(id, name, slug)")
+    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id")
     .eq("status", "published")
     .order("title");
   if (error) throw error;
-  return data ?? [];
+  const careers = data ?? [];
+  const ids = Array.from(new Set(careers.map((c: any) => c.primary_cluster_id).filter(Boolean)));
+  if (ids.length === 0) return careers;
+  const { data: clusters } = await supabase.from("acte_clusters").select("id, name, slug").in("id", ids);
+  const map = new Map((clusters ?? []).map((c: any) => [c.id, c]));
+  return careers.map((c: any) => ({ ...c, primary_cluster: c.primary_cluster_id ? map.get(c.primary_cluster_id) ?? null : null }));
 }
 
 export async function fetchPublishedCareersByCluster(clusterSlug: string, pathwaySlug?: string | null) {
@@ -38,7 +43,7 @@ export async function fetchPublishedCareersByCluster(clusterSlug: string, pathwa
 
   let query = supabase
     .from("careers")
-    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_sub_cluster_id, primary_cluster:acte_clusters!careers_primary_cluster_id_fkey(id, name, slug)")
+    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_sub_cluster_id")
     .eq("status", "published");
 
   if (taggedIds.length > 0) {
@@ -49,6 +54,14 @@ export async function fetchPublishedCareersByCluster(clusterSlug: string, pathwa
   const { data, error } = await query.order("title");
   if (error) throw error;
   let careers = data ?? [];
+  // Attach primary_cluster (name, slug) — current filtered cluster is the most common one
+  careers = careers.map((c: any) => ({ ...c, primary_cluster: c.primary_cluster_id === cluster.id ? { id: cluster.id, name: cluster.name, slug: cluster.slug } : null }));
+  const missingIds = Array.from(new Set(careers.filter((c: any) => !c.primary_cluster && c.primary_cluster_id).map((c: any) => c.primary_cluster_id)));
+  if (missingIds.length) {
+    const { data: extra } = await supabase.from("acte_clusters").select("id, name, slug").in("id", missingIds);
+    const m = new Map((extra ?? []).map((c: any) => [c.id, c]));
+    careers = careers.map((c: any) => c.primary_cluster ? c : ({ ...c, primary_cluster: c.primary_cluster_id ? m.get(c.primary_cluster_id) ?? null : null }));
+  }
 
   if (pathway) {
     const { data: subTagRows } = await supabase
