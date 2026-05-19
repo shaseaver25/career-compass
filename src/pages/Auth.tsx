@@ -12,6 +12,9 @@ import { lovable } from "@/integrations/lovable";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"password" | "magic">("password");
+  const [isSignup, setIsSignup] = useState(false);
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [params] = useSearchParams();
@@ -33,9 +36,25 @@ const Auth = () => {
   }
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}${redirect}` } });
-    setLoading(false);
-    if (error) toast.error(error.message); else { setSent(true); toast.success("Check your email for the sign-in link"); }
+    if (mode === "magic") {
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}${redirect}` } });
+      setLoading(false);
+      if (error) toast.error(error.message); else { setSent(true); toast.success("Check your email for the sign-in link"); }
+      return;
+    }
+    if (isSignup) {
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: `${window.location.origin}${redirect}` },
+      });
+      setLoading(false);
+      if (error) toast.error(error.message);
+      else toast.success("Account created. Signing you in…");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) toast.error(error.message);
+    }
   };
   const onGoogle = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
@@ -66,8 +85,31 @@ const Auth = () => {
                 <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
               </div>
               <div><Label htmlFor="email">Email</Label><Input id="email" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" /></div>
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending…" : "Send magic link"}</Button>
-              <p className="text-xs text-muted-foreground">Browsing? You don't need an account. Sign-in is for company reps and admins.</p>
+              {mode === "password" && (
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Working…" : mode === "magic" ? "Send magic link" : isSignup ? "Create account" : "Sign in"}
+              </Button>
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                {mode === "password" ? (
+                  <>
+                    <button type="button" className="text-left underline-offset-2 hover:underline" onClick={() => setIsSignup(s => !s)}>
+                      {isSignup ? "Have an account? Sign in" : "New here? Create an account"}
+                    </button>
+                    <button type="button" className="text-left underline-offset-2 hover:underline" onClick={() => setMode("magic")}>
+                      Use a magic link instead
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="text-left underline-offset-2 hover:underline" onClick={() => setMode("password")}>
+                    Use email + password instead
+                  </button>
+                )}
+              </div>
             </form>
           )}
         </div>
