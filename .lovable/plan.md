@@ -1,51 +1,70 @@
-## Problem
+## Goal
 
-Two issues compound the broken sign-in flow:
+Redesign the "Explore by region" map on `/explore` so the 23 Perkins consortia are positioned **on a recognizable Minnesota outline** in their actual geographic areas, with a zoomed Metro inset for the 8 Twin Cities consortia. Numbered regions + a side legend keep the map readable without crowding tiny shapes with text.
 
-1. **Magic-link race condition.** When the magic link lands on `/dashboard#access_token=…`, Supabase needs a moment to parse the hash and fire `SIGNED_IN`. Our `useAuth` calls `getSession()` in parallel — it resolves first with `null`, flips `loading` to `false`, and `RequireRole` immediately bounces the user to `/auth?redirect=/dashboard`. By the time the session is actually established, we're already back on the login page.
+## What the user sees
 
-2. **No onboarding for new reps.** A brand-new rep has no `companies` row, so even after we fix the redirect the dashboard is just an empty form. The user wants an explicit "create your company dashboard" moment.
+```text
+┌───────────────────────────────────────────────────────────┐
+│ MINNESOTA · PERKINS CTE CONSORTIA                         │
+│                                                           │
+│      ╭────── MN silhouette ──────╮     ┌── Legend ──┐    │
+│      │  ①   ②   ③       ④      │     │ ① Pine to  │    │
+│      │     ⑤   ⑥   ⑦   ⑧      │     │   Prairie  │    │
+│      │       ⑨   ⑩          ╔═╗ │     │ ② Lakes... │    │
+│      │  ⑪  ⑫            ╔═╝M╚╗│     │  ...        │    │
+│      │              ⑬⑭⑮ ╚═══╝│     │ Metro inset│    │
+│      ╰───────────────────────────╯     │ ⒂ Mpls ... │    │
+│                                        └────────────┘    │
+│ ┌─ Selected: ⑨ Mid Minnesota ─────────────────────────┐ │
+│ │ Anchor: Ridgewater College · Central MN              │ │
+│ │ [building icons] 4 companies   [briefcase] 12 careers│ │
+│ │ ...chips, Browse companies, Browse careers           │ │
+│ └──────────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────┘
+```
 
-## Fix
+- Each region is a colored polygon inside a stylized MN outline, numbered 1–15 for greater MN.
+- The Twin Cities Metro area is rendered as an inset box (right of, or below, the silhouette) with 8 smaller numbered cells for the metro consortia (16–23).
+- A legend lists `# — Name — Anchor` for every consortium, grouped Greater MN / Metro. Clicking a legend row selects that region (same behavior as clicking the shape).
+- Hover or selection: region brightens and lifts; legend row highlights; existing detail panel below stays unchanged (companies, careers, Browse buttons).
+- Keyboard nav and a11y semantics preserved from current component.
 
-### 1. Resolve the auth race
+## Visual approach
 
-Update `src/hooks/useAuth.tsx`:
+- **Stylized SVG silhouette**: a single hand-tuned `<path>` approximating Minnesota's borders (NW arrowhead, Iron Range bump on NE, southern straight edge, river curve on the east). Drawn once, ~30 anchor points.
+- **Region polygons**: ~15 hand-tuned polygons inside the silhouette, one per Greater MN consortium, colored by `region_label` using the existing `REGION_COLOR` palette (already in the component — kept verbatim).
+- **Metro inset**: rounded rectangle outside the silhouette (right side on desktop, stacked below on mobile), with a thin connector line from the metro's geographic spot on the silhouette to the inset. Contains a 4×2 grid of smaller numbered cells.
+- **Numbers**: centered SVG `<text>` in each shape; large enough to read at the silhouette scale. No consortium names inside shapes.
+- **Legend**: HTML (not SVG) two-column list on desktop, single column on mobile. Each row: number badge in region color + name + tiny anchor college subtext. Hovering a row highlights the matching shape via shared `hoverCode` state.
 
-- Detect an auth callback in the URL (`window.location.hash` contains `access_token` or `?code=`). If present, **do not** mark `loading=false` from `getSession()` — wait for the first `onAuthStateChange` event instead.
-- Track loading off the first auth event we see (whichever arrives first: initial session or state change), so the provider only reports "ready" once Supabase has finished processing the URL.
-- Roles fetch stays gated behind the same readiness flag.
+## Files to change
 
-This eliminates the false-negative redirect on `/dashboard` after a magic-link click.
+1. **`src/components/MnConsortiaMap.tsx`** — full rewrite of the map portion:
+   - Remove `GREATER_POSITIONS`, `METRO_BLOCK`, `tileXY`, tile-grid rendering, and `wrapLabel`.
+   - Add `MN_OUTLINE_PATH` constant (the silhouette path).
+   - Add `GREATER_REGIONS: Record<code, { points: string; numberAt: [x,y] }>` — polygon points + label anchor for each of the 15 greater-MN consortia.
+   - Add `METRO_INSET` geometry (origin, size) and `METRO_CELLS: Record<code, {col,row}>` for the 8 metro cells.
+   - Render order: silhouette fill → region polygons → metro inset box + connector → number labels.
+   - Add `<aside>` legend beside/below the SVG using the same `consortia` query data and shared hover/select state.
+   - Keep: `fetchConsortia`, `fetchConsortiumPreview` calls; detail panel JSX; keyboard nav; routing to `/companies?consortium=` and `/careers?consortium=`.
 
-### 2. Make `/auth` forward-aware
+2. **`src/pages/Explore.tsx`** — widen the map container from `max-w-3xl` to `max-w-5xl` so the silhouette + legend fit side-by-side on desktop. No other changes.
 
-`src/pages/Auth.tsx` already redirects when `user` is set, but only after `authLoading` is false. With fix #1 that becomes reliable. Add a small belt-and-suspenders check: if the URL has an auth hash, render a spinner instead of the sign-in form while we wait.
+No DB, queries, routing, or RLS changes. No new dependencies.
 
-### 3. First-time "Create company dashboard" modal
+## Technical notes
 
-In `src/pages/Dashboard.tsx`:
+- Polygon coordinates are authored by hand in viewBox units (e.g. `viewBox="0 0 600 520"`). They are approximate, not GIS-accurate — same trade-off the user already approved when they picked "stylized SVG" originally.
+- Region → polygon mapping is driven by `consortium.code`, so if DB display_order shifts, the map still renders correctly.
+- Numbering uses the existing `display_order` from `mn_perkins_consortia` so it matches any future admin reordering.
+- Responsive: at `< md`, stack legend under the SVG; silhouette scales via `viewBox` + `w-full h-auto`.
+- Existing color tokens (`hsl(var(--card))`, `hsl(var(--ring))`, `hsl(var(--muted-foreground))`) are reused — no new tokens.
+- All interactive behavior (hover lift, focus ring, Enter to select, Esc to clear, detail panel, Browse buttons) preserved.
 
-- After the `my-company` query resolves, if `company === null`, open a modal (`<Dialog>`) titled **"Create your company dashboard"** instead of showing the empty inline form.
-- Modal fields: company name (required), industry, city, state, logo emoji.
-- On submit:
-  - Insert into `companies` with `owner_id = user.id`, generated slug, `status = 'draft'`.
-  - Insert primary `company_locations` row if city/state filled.
-  - Invalidate the `my-company` query.
-  - Close the modal — the dashboard now renders normally, scrolled to the profile card with a toast: "Dashboard created. Finish your profile, then submit for review."
-- Modal cannot be dismissed without either creating or signing out (no accidental empty state).
+## Out of scope
 
-No schema changes — `companies` and `company_locations` already exist with correct RLS.
-
-### Technical notes
-
-- `useAuth` change is the critical fix; everything else builds on it.
-- Keep `RequireRole`'s loading spinner; it now actually waits for the real signal.
-- The modal reuses the existing form state shape in `Dashboard.tsx` so the second-pass edit screen stays identical.
-- No new dependencies.
-
-### Files touched
-
-- `src/hooks/useAuth.tsx` — fix loading state for URL-callback case
-- `src/pages/Auth.tsx` — show spinner when an auth hash is present
-- `src/pages/Dashboard.tsx` — add "Create company dashboard" dialog for new reps
+- Real GeoJSON / accurate county boundaries.
+- Pan/zoom on the silhouette.
+- Changes to `/careers` or `/companies` filtering (already working via `?consortium=`).
+- Any DB or queries.ts changes.
