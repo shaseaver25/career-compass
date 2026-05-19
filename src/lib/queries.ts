@@ -13,11 +13,11 @@ export async function fetchPublishedCareers() {
 export async function fetchPublishedCareersByCluster(clusterSlug: string) {
   const { data: cluster, error: cErr } = await supabase
     .from("acte_clusters")
-    .select("id")
+    .select("id, name, slug, grouping_id, acte_cluster_groupings(name, color_hex)")
     .eq("slug", clusterSlug)
     .maybeSingle();
   if (cErr) throw cErr;
-  if (!cluster) return { careers: [], unknownCluster: true as const };
+  if (!cluster) return { careers: [], cluster: null, unknownCluster: true as const };
 
   const { data: tagRows, error: tErr } = await supabase
     .from("career_cluster_tags")
@@ -38,7 +38,7 @@ export async function fetchPublishedCareersByCluster(clusterSlug: string) {
   }
   const { data, error } = await query.order("title");
   if (error) throw error;
-  return { careers: data ?? [], unknownCluster: false as const };
+  return { careers: data ?? [], cluster, unknownCluster: false as const };
 }
 
 export async function fetchPublishedCompanies() {
