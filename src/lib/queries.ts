@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 export async function fetchPublishedCareers() {
   const { data, error } = await supabase
     .from("careers")
-    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured")
+    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_cluster:acte_clusters!careers_primary_cluster_id_fkey(id, name, slug)")
     .eq("status", "published")
     .order("title");
   if (error) throw error;
@@ -38,7 +38,7 @@ export async function fetchPublishedCareersByCluster(clusterSlug: string, pathwa
 
   let query = supabase
     .from("careers")
-    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_sub_cluster_id")
+    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_sub_cluster_id, primary_cluster:acte_clusters!careers_primary_cluster_id_fkey(id, name, slug)")
     .eq("status", "published");
 
   if (taggedIds.length > 0) {
