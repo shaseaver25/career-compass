@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Building2, ExternalLink } from "lucide-react";
 import { fetchConsortia, fetchConsortiumPreview, type ConsortiumRow } from "@/lib/queries";
+import { MN_OUTLINE_PATH } from "./mnOutline";
 
 // ---- Geometry --------------------------------------------------------------
 // Stylized MN silhouette in a 880×540 viewBox. Silhouette occupies x:20-560,
@@ -10,50 +11,29 @@ import { fetchConsortia, fetchConsortiumPreview, type ConsortiumRow } from "@/li
 const VB_W = 880;
 const VB_H = 540;
 
-// Hand-tuned MN outline: NW Angle bump, top edge, NE arrowhead down Lake
-// Superior shore, east border (St. Croix curve), south straight edge, west
-// border back up to the Angle. Approximate, not GIS-accurate.
-const MN_OUTLINE_PATH = [
-  "M 90 40",            // start top of NW Angle
-  "L 130 40 L 130 70",  // NW Angle bump
-  "L 470 70",           // northern border (Canada)
-  "L 480 95 L 500 110", // small north step
-  "L 530 150",          // toward Grand Portage
-  "L 545 200",          // NE arrowhead tip
-  "L 510 235",          // start of Lake Superior shore
-  "L 470 270",
-  "L 445 305",
-  "L 425 345",          // Duluth area
-  "L 460 380",          // east border bump (St. Croix)
-  "L 450 430",
-  "L 470 480",          // SE corner
-  "L 90 480",           // southern border (Iowa)
-  "L 60 470",
-  "L 55 380",           // west border down (Red River)
-  "L 60 280",
-  "L 70 180",
-  "L 80 90",
-  "Z",
-].join(" ");
-
-// Greater-MN consortium markers placed on the silhouette.
+// Greater-MN consortium markers, projected from real anchor-city lat/lng
+// into the same projection used by MN_OUTLINE_PATH (equirectangular fitted
+// to the silhouette region of the viewBox).
 const GREATER_POINTS: Record<string, { x: number; y: number }> = {
-  pine_to_prairie:  { x: 110, y: 115 },  // NW (Thief River Falls)
-  lakes_country:    { x: 175, y: 140 },  // Detroit Lakes
-  north_country:    { x: 260, y: 130 },  // Bemidji
-  true_north_stars: { x: 370, y: 130 },  // Iron Range / Virginia
-  runestone:        { x: 140, y: 230 },  // Alexandria
-  central_lakes:    { x: 240, y: 210 },  // Brainerd
-  pine_technical:   { x: 350, y: 240 },  // Pine City
-  lake_superior:    { x: 455, y: 255 },  // Duluth
-  mid_minnesota:    { x: 175, y: 320 },  // Willmar / Hutchinson
-  great_river:      { x: 285, y: 310 },  // St. Cloud
-  minnesota_west:   { x: 110, y: 410 },  // Worthington
-  south_central:    { x: 215, y: 415 },  // Mankato
-  riverland:        { x: 290, y: 450 },  // Austin
-  rochester_zed:    { x: 370, y: 430 },  // Rochester
-  southeast:        { x: 425, y: 410 },  // Winona
+  pine_to_prairie:  { x: 138.3, y: 128.8 }, // Thief River Falls
+  lakes_country:    { x: 156.1, y: 230.4 }, // Detroit Lakes
+  north_country:    { x: 208.4, y: 179.6 }, // Bemidji
+  true_north_stars: { x: 336.5, y: 177.3 }, // Virginia / Hibbing
+  runestone:        { x: 181.4, y: 303.9 }, // Alexandria
+  central_lakes:    { x: 245.0, y: 266.4 }, // Brainerd
+  pine_technical:   { x: 311.2, y: 307.8 }, // Pine City
+  lake_superior:    { x: 358.1, y: 233.6 }, // Duluth
+  mid_minnesota:    { x: 199.7, y: 363.3 }, // Willmar
+  great_river:      { x: 247.1, y: 328.9 }, // St. Cloud
+  minnesota_west:   { x: 169.6, y: 460.0 }, // Worthington (nudged off border)
+  south_central:    { x: 256.3, y: 438.4 }, // Mankato
+  riverland:        { x: 311.2, y: 460.0 }, // Austin (nudged off border)
+  rochester_zed:    { x: 338.7, y: 449.3 }, // Rochester
+  southeast:        { x: 382.9, y: 447.0 }, // Winona
 };
+// Twin Cities geographic center on the silhouette (Mpls), used as start of
+// the dashed connector line to the Metro inset box.
+const METRO_ANCHOR = { x: 295.1, y: 374.3 };
 
 // Twin Cities Metro inset
 const METRO_BOX = { x: 600, y: 220, w: 260, h: 220 };
@@ -180,16 +160,18 @@ export function MnConsortiaMap({ size }: MnConsortiaMapProps) {
             MINNESOTA · PERKINS CTE CONSORTIA
           </text>
 
-          {/* MN silhouette */}
+          {/* Real MN state boundary (GeoJSON-derived) */}
           <path d={MN_OUTLINE_PATH}
                 fill="hsl(var(--muted))"
-                stroke="hsl(var(--border))" strokeWidth={1.5}
-                strokeLinejoin="round" />
+                stroke="hsl(var(--border))" strokeWidth={1}
+                strokeLinejoin="round" strokeLinecap="round" />
 
-          {/* Connector from metro spot to inset box */}
-          <line x1={395} y1={345} x2={METRO_BOX.x} y2={METRO_BOX.y + METRO_BOX.h / 2}
+          {/* Connector from Twin Cities geographic spot to inset box */}
+          <line x1={METRO_ANCHOR.x} y1={METRO_ANCHOR.y}
+                x2={METRO_BOX.x} y2={METRO_BOX.y + METRO_BOX.h / 2}
                 stroke="#C36B2A" strokeWidth={1.2} strokeDasharray="4 3" opacity={0.55} />
-          <circle cx={395} cy={345} r={4} fill="#C36B2A" opacity={0.7} />
+          <circle cx={METRO_ANCHOR.x} cy={METRO_ANCHOR.y} r={4}
+                  fill="#C36B2A" opacity={0.75} />
 
           {/* Greater-MN markers */}
           {greaterList.map((c) => {
