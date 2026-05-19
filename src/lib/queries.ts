@@ -137,3 +137,80 @@ export async function fetchCompanyBySlug(slug: string) {
   const careers = (links ?? []).map((l: any) => l.careers).filter((c: any) => c && c.status === "published");
   return { company, videos: videos ?? [], careers, interviews: interviews ?? [] };
 }
+
+// ---------- Perkins consortia ----------
+export type ConsortiumRow = {
+  id: string; code: string; name: string; region_label: string;
+  anchor_college: string; is_metro: boolean; display_order: number;
+};
+
+export async function fetchConsortia(): Promise<ConsortiumRow[]> {
+  const { data, error } = await supabase
+    .from("mn_perkins_consortia")
+    .select("id, code, name, region_label, anchor_college, is_metro, display_order")
+    .order("display_order");
+  if (error) throw error;
+  return (data ?? []) as ConsortiumRow[];
+}
+
+/** Look up which published companies + careers are tied to a consortium (by code). */
+export async function fetchConsortiumMembership(code: string) {
+  const { data: consortium } = await supabase
+    .from("mn_perkins_consortia")
+    .select("id, code, name, region_label, anchor_college, is_metro")
+    .eq("code", code).maybeSingle();
+  if (!consortium) return { consortium: null, companyIds: [] as string[], careerIds: [] as string[] };
+
+  const { data: locs } = await supabase
+    .from("company_locations")
+    .select("company_id")
+    .eq("consortium_id", consortium.id);
+  const rawCompanyIds = Array.from(new Set((locs ?? []).map((l: any) => l.company_id as string)));
+  if (rawCompanyIds.length === 0) return { consortium, companyIds: [], careerIds: [] };
+
+  const { data: pubCos } = await supabase
+    .from("companies").select("id").in("id", rawCompanyIds).eq("status", "published");
+  const companyIds = (pubCos ?? []).map((c: any) => c.id as string);
+  if (companyIds.length === 0) return { consortium, companyIds: [], careerIds: [] };
+
+  const { data: ccs } = await supabase
+    .from("company_careers").select("career_id").in("company_id", companyIds);
+  const candidateCareerIds = Array.from(new Set((ccs ?? []).map((cc: any) => cc.career_id as string)));
+  if (candidateCareerIds.length === 0) return { consortium, companyIds, careerIds: [] };
+
+  const { data: pubCareers } = await supabase
+    .from("careers").select("id").in("id", candidateCareerIds).eq("status", "published");
+  const careerIds = (pubCareers ?? []).map((c: any) => c.id as string);
+
+  return { consortium, companyIds, careerIds };
+}
+
+/** Detailed preview used in the map's side panel. */
+export async function fetchConsortiumPreview(code: string) {
+  const { consortium, companyIds, careerIds } = await fetchConsortiumMembership(code);
+  if (!consortium) return { consortium: null, companies: [], careers: [] };
+
+  let companies: any[] = [];
+  if (companyIds.length) {
+    const { data } = await supabase
+      .from("companies")
+      .select("id, slug, name, industry, logo_emoji, logo_url, description")
+      .in("id", companyIds).order("name");
+    companies = data ?? [];
+  }
+  let careers: any[] = [];
+  if (careerIds.length) {
+    const { data } = await supabase
+      .from("careers")
+      .select("id, slug, title, short_description, median_salary, growth_outlook, industry, primary_cluster_id")
+      .in("id", careerIds).order("title");
+    careers = data ?? [];
+    const clusterIds = Array.from(new Set(careers.map((c: any) => c.primary_cluster_id).filter(Boolean)));
+    if (clusterIds.length) {
+      const { data: cls } = await supabase.from("acte_clusters").select("id, name, slug").in("id", clusterIds);
+      const m = new Map((cls ?? []).map((c: any) => [c.id, c]));
+      careers = careers.map((c: any) => ({ ...c, primary_cluster: c.primary_cluster_id ? m.get(c.primary_cluster_id) ?? null : null }));
+    }
+  }
+  return { consortium, companies, careers };
+}
