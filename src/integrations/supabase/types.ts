@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      acte_cluster_groupings: {
+        Row: {
+          code: string
+          color_hex: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_cross_cutting: boolean
+          name: string
+        }
+        Insert: {
+          code: string
+          color_hex: string
+          created_at?: string
+          description?: string | null
+          display_order: number
+          id?: string
+          is_cross_cutting?: boolean
+          name: string
+        }
+        Update: {
+          code?: string
+          color_hex?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_cross_cutting?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      acte_clusters: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          display_order: number
+          grouping_id: string
+          icon_name: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          display_order: number
+          grouping_id: string
+          icon_name?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          grouping_id?: string
+          icon_name?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acte_clusters_grouping_id_fkey"
+            columns: ["grouping_id"]
+            isOneToOne: false
+            referencedRelation: "acte_cluster_groupings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -75,10 +152,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookmarks_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookmarks_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      career_cluster_tags: {
+        Row: {
+          career_id: string
+          cluster_id: string
+          created_at: string
+          is_primary: boolean
+        }
+        Insert: {
+          career_id: string
+          cluster_id: string
+          created_at?: string
+          is_primary?: boolean
+        }
+        Update: {
+          career_id?: string
+          cluster_id?: string
+          created_at?: string
+          is_primary?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "career_cluster_tags_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "careers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "career_cluster_tags_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "career_cluster_tags_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_clusters"
             referencedColumns: ["id"]
           },
         ]
@@ -94,10 +221,12 @@ export type Database = {
           industry: string | null
           median_salary: number | null
           onet_code: string | null
+          primary_cluster_id: string | null
           short_description: string | null
           skills: string[]
           slug: string
           status: Database["public"]["Enums"]["content_status"]
+          tech_tags: string[]
           title: string
           typical_day: string | null
           updated_at: string
@@ -114,10 +243,12 @@ export type Database = {
           industry?: string | null
           median_salary?: number | null
           onet_code?: string | null
+          primary_cluster_id?: string | null
           short_description?: string | null
           skills?: string[]
           slug: string
           status?: Database["public"]["Enums"]["content_status"]
+          tech_tags?: string[]
           title: string
           typical_day?: string | null
           updated_at?: string
@@ -134,15 +265,25 @@ export type Database = {
           industry?: string | null
           median_salary?: number | null
           onet_code?: string | null
+          primary_cluster_id?: string | null
           short_description?: string | null
           skills?: string[]
           slug?: string
           status?: Database["public"]["Enums"]["content_status"]
+          tech_tags?: string[]
           title?: string
           typical_day?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "careers_primary_cluster_id_fkey"
+            columns: ["primary_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       companies: {
         Row: {
@@ -217,6 +358,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "company_careers_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "company_careers_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -230,27 +378,36 @@ export type Database = {
           address: string | null
           city: string
           company_id: string
+          consortium_id: string | null
           created_at: string
           id: string
           is_primary: boolean
+          latitude: number | null
+          longitude: number | null
           state: string
         }
         Insert: {
           address?: string | null
           city: string
           company_id: string
+          consortium_id?: string | null
           created_at?: string
           id?: string
           is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
           state: string
         }
         Update: {
           address?: string | null
           city?: string
           company_id?: string
+          consortium_id?: string | null
           created_at?: string
           id?: string
           is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
           state?: string
         }
         Relationships: [
@@ -259,6 +416,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_locations_consortium_id_fkey"
+            columns: ["consortium_id"]
+            isOneToOne: false
+            referencedRelation: "mn_perkins_consortia"
             referencedColumns: ["id"]
           },
         ]
@@ -375,6 +539,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "interviews_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "interviews_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -382,6 +553,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mn_perkins_consortia: {
+        Row: {
+          anchor_college: string
+          code: string
+          created_at: string
+          display_order: number
+          id: string
+          is_metro: boolean
+          name: string
+          region_label: string
+        }
+        Insert: {
+          anchor_college: string
+          code: string
+          created_at?: string
+          display_order: number
+          id?: string
+          is_metro?: boolean
+          name: string
+          region_label: string
+        }
+        Update: {
+          anchor_college?: string
+          code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_metro?: boolean
+          name?: string
+          region_label?: string
+        }
+        Relationships: []
       }
       pathway_steps: {
         Row: {
@@ -417,6 +621,13 @@ export type Database = {
             columns: ["career_id"]
             isOneToOne: false
             referencedRelation: "careers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pathway_steps_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
             referencedColumns: ["id"]
           },
         ]
@@ -506,6 +717,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "videos_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "videos_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -516,7 +734,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_careers_with_cluster: {
+        Row: {
+          cluster_code: string | null
+          cluster_name: string | null
+          cluster_slug: string | null
+          created_at: string | null
+          description: string | null
+          education_level: Database["public"]["Enums"]["education_level"] | null
+          featured: boolean | null
+          grouping_code: string | null
+          grouping_color: string | null
+          grouping_name: string | null
+          growth_outlook: Database["public"]["Enums"]["growth_outlook"] | null
+          id: string | null
+          industry: string | null
+          is_cross_cutting: boolean | null
+          median_salary: number | null
+          onet_code: string | null
+          primary_cluster_id: string | null
+          short_description: string | null
+          skills: string[] | null
+          slug: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          tech_tags: string[] | null
+          title: string | null
+          typical_day: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "careers_primary_cluster_id_fkey"
+            columns: ["primary_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

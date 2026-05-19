@@ -18,6 +18,7 @@ import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import InterviewNew from "./pages/InterviewNew.tsx";
 import Admin from "./pages/Admin.tsx";
+import Explore from "./pages/Explore.tsx";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/careers/:slug" element={<CareerDetail />} />
+                <Route path="/explore" element={<Explore />} />
                 <Route path="/companies" element={<Companies />} />
                 <Route path="/companies/:slug" element={<CompanyDetail />} />
                 <Route path="/bookmarks" element={<Bookmarks />} />
