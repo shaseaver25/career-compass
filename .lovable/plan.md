@@ -1,111 +1,51 @@
-# CTE Careers — v1 Build Plan
+## Problem
 
-A statewide career-exploration platform for high schoolers, teachers, and company reps. Fresh & energetic visual style, mobile-first, WCAG AA, built on the existing Supabase schema.
+Two issues compound the broken sign-in flow:
 
-## Design system
+1. **Magic-link race condition.** When the magic link lands on `/dashboard#access_token=…`, Supabase needs a moment to parse the hash and fire `SIGNED_IN`. Our `useAuth` calls `getSession()` in parallel — it resolves first with `null`, flips `loading` to `false`, and `RequireRole` immediately bounces the user to `/auth?redirect=/dashboard`. By the time the session is actually established, we're already back on the login page.
 
-- **Vibe**: Fresh & energetic — clean white surfaces, confident teal/green primary, lively accent for badges and CTAs. Rounded cards, generous spacing, friendly type. Consumer-app feel, not edu-tech.
-- **Tokens** (HSL, defined in `index.css`):
-  - Primary: teal-green ~`160 70% 40%`
-  - Accent: warm amber ~`38 95% 55%` (growth badges, highlights)
-  - Background: near-white, soft muted surface for cards
-  - Dark mode included
-- **Typography**: Inter via Google Fonts. Bold display weights for headings.
-- **Components**: shadcn/ui (Button, Card, Input, Badge, Select, Tabs, Dialog, Sheet, Skeleton, Sonner toasts, Avatar, Form).
-- **Accessibility**: visible focus rings, semantic landmarks, alt text on logos, aria-labels on icon buttons, color contrast AA.
+2. **No onboarding for new reps.** A brand-new rep has no `companies` row, so even after we fix the redirect the dashboard is just an empty form. The user wants an explicit "create your company dashboard" moment.
 
-## Pages & routes
+## Fix
 
-### Public (no auth)
-1. **`/` Landing** — hero with search (routes to `/careers?q=`), two CTAs, featured careers grid (6), featured companies grid (4), two role explainer cards (students/teachers vs companies).
-2. **`/careers`** — search box + filters (industry, growth outlook, education level), responsive card grid. Debounced client-side filtering over fetched list.
-3. **`/careers/:slug`** — title, O*NET code, growth badge, description, typical day, three stat cards (median salary, education, top skills), skills as badges, ordered Pathway timeline, "Companies that hire for this role" cards, embedded interview audio/video players. SEO + OG tags.
-4. **`/companies`** — search + industry/location filters, company card grid.
-5. **`/companies/:slug`** — logo, name, industry, location, description, responsive YouTube/Vimeo embeds, careers-at-this-company cards, published interviews list with inline audio.
-6. **`/auth`** — magic-link sign in (Supabase) for company reps and admins. Email-only form, friendly copy.
+### 1. Resolve the auth race
 
-### Company rep (auth, role = `company_rep`)
-7. **`/dashboard`** — overview tiles + tabs:
-   - **Profile**: edit name, description, industry, website, logo upload (Supabase Storage), location (company_locations), video links. "Submit for review" button → sets status to pending.
-   - **Careers we hire for**: searchable picker over careers catalog, add/remove rows in `company_careers`. "Request a new career" opens dialog that creates an admin task (audit_log entry).
-   - **Interviews**: list of own interviews with status badges (draft / pending / published).
-8. **`/dashboard/interviews/new`** — upload audio file (or browser MediaRecorder) → Supabase Storage, structured form with all 11 fields from brief, autosave draft every few seconds, "Submit for review" finalizes draft.
-9. **`/dashboard/interviews/:id`** — edit a draft until submitted.
+Update `src/hooks/useAuth.tsx`:
 
-### Admin (auth, role = `admin`)
-10. **`/admin`** — tabs:
-    - Pending company submissions (approve / request changes)
-    - Interview drafts (listen inline, edit fields, approve to publish)
-    - Careers catalog manager (create/edit/delete career, manage pathway_steps in order, set salary/outlook)
-    - Users (promote to company_rep or admin via user_roles)
+- Detect an auth callback in the URL (`window.location.hash` contains `access_token` or `?code=`). If present, **do not** mark `loading=false` from `getSession()` — wait for the first `onAuthStateChange` event instead.
+- Track loading off the first auth event we see (whichever arrives first: initial session or state change), so the provider only reports "ready" once Supabase has finished processing the URL.
+- Roles fetch stays gated behind the same readiness flag.
 
-### Bookmarks
-- Save/unsave button on every career and company card and detail page.
-- Stored in `localStorage` only (no DB writes for anon users).
-- `/bookmarks` page lists saved items grouped by type.
+This eliminates the false-negative redirect on `/dashboard` after a magic-link click.
 
-## Bookmarks behavior
-LocalStorage only, exactly as briefed. Two arrays: `bookmarked_careers`, `bookmarked_companies` (slug arrays). Hydration-safe hook; bookmark button optimistic with sonner toast.
+### 2. Make `/auth` forward-aware
 
-## Anonymous-first principle
-Every public page is reachable without auth. Auth is only triggered on `/dashboard` and `/admin` routes with a friendly redirect.
+`src/pages/Auth.tsx` already redirects when `user` is set, but only after `authLoading` is false. With fix #1 that becomes reliable. Add a small belt-and-suspenders check: if the URL has an auth hash, render a spinner instead of the sign-in form while we wait.
 
-## Auth & roles
-- Supabase magic link (email).
-- Roles read from existing `user_roles` table via `has_role()` security-definer function.
-- Route guards: `<RequireRole role="company_rep">` and `<RequireRole role="admin">` wrappers.
-- Anonymous browsing untouched.
+### 3. First-time "Create company dashboard" modal
 
-## SEO & sharing
-- `react-helmet-async` per page: title, description, canonical, OG title/description/image.
-- OG image: company logo for company pages; a generated branded card for careers (static SVG fallback for v1).
-- Sitemap not in v1.
+In `src/pages/Dashboard.tsx`:
 
-## Seed data (4 companies × 10 careers, richly pre-linked)
+- After the `my-company` query resolves, if `company === null`, open a modal (`<Dialog>`) titled **"Create your company dashboard"** instead of showing the empty inline form.
+- Modal fields: company name (required), industry, city, state, logo emoji.
+- On submit:
+  - Insert into `companies` with `owner_id = user.id`, generated slug, `status = 'draft'`.
+  - Insert primary `company_locations` row if city/state filled.
+  - Invalidate the `my-company` query.
+  - Close the modal — the dashboard now renders normally, scrolled to the profile card with a toast: "Dashboard created. Finish your profile, then submit for review."
+- Modal cannot be dismissed without either creating or signing out (no accidental empty state).
 
-**Companies**
-- Mercy Regional Hospital (Healthcare, Springfield)
-- Apex Precision Manufacturing (Manufacturing, Peoria)
-- Ironworks Construction Co. (Construction, Rockford)
-- NorthStar IT Solutions (IT, Chicago)
+No schema changes — `companies` and `company_locations` already exist with correct RLS.
 
-**Careers** (with O*NET-style codes, median salary, growth outlook, pathway steps, skills)
-- Healthcare: Registered Nurse, Surgical Technologist, Medical Assistant
-- Manufacturing: CNC Machinist, Industrial Maintenance Technician
-- Construction: Electrician, Carpenter, Construction Project Manager
-- IT: Network Administrator, Cybersecurity Analyst
+### Technical notes
 
-Each career links to 1–3 relevant companies via `company_careers`. Two seeded published interviews (one nurse at Mercy, one electrician at Ironworks) so interview UI shows real content. Each company has a description, location, one YouTube embed.
+- `useAuth` change is the critical fix; everything else builds on it.
+- Keep `RequireRole`'s loading spinner; it now actually waits for the real signal.
+- The modal reuses the existing form state shape in `Dashboard.tsx` so the second-pass edit screen stays identical.
+- No new dependencies.
 
-Seeded via a SQL migration that upserts on slug so it's safe to re-run.
+### Files touched
 
-## File audio playback
-Custom shadcn-styled audio player wrapping the native `<audio>` element with play/pause, scrubber, time, download link.
-
-## YouTube/Vimeo embed
-Helper that detects URL type and renders a responsive 16:9 iframe wrapped in `aspect-video`.
-
-## Out of scope (confirmed)
-Teacher accounts, lesson plans, any AI, mentor matching, payments, O*NET/BLS sync, CTE standards picker.
-
----
-
-## Technical notes
-
-- Stack: existing Vite + React + TS + Tailwind + shadcn/ui + React Router + TanStack Query + Lovable Cloud (Supabase).
-- New deps: `react-helmet-async` (SEO).
-- Storage buckets to create via SQL migration:
-  - `company-logos` (public)
-  - `interview-audio` (public read for published; reps can write to their own folder)
-  - RLS policies on `storage.objects` scoped by `auth.uid()` folder prefix.
-- Use existing tables as-is; no schema changes expected. If `user_roles`/`has_role` don't exist yet, add them per the standard secure pattern.
-- Magic link `emailRedirectTo: window.location.origin + '/dashboard'`.
-- All Supabase mutations gated behind authenticated session; client never trusts role claims — RLS enforces.
-- Build order:
-  1. Design tokens + layout shell + nav/footer
-  2. Seed migration + storage buckets + roles
-  3. Landing → Careers directory → Career detail
-  4. Companies directory → Company detail
-  5. Auth + dashboard (profile, careers links, interview upload)
-  6. Admin moderation queue
-  7. Bookmarks page + SEO polish
+- `src/hooks/useAuth.tsx` — fix loading state for URL-callback case
+- `src/pages/Auth.tsx` — show spinner when an auth hash is present
+- `src/pages/Dashboard.tsx` — add "Create company dashboard" dialog for new reps
