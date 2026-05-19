@@ -1,45 +1,44 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function fetchPublishedCareers(clusterSlug?: string) {
-  if (clusterSlug) {
-    const { data: cluster, error: cErr } = await supabase
-      .from("acte_clusters")
-      .select("id")
-      .eq("slug", clusterSlug)
-      .maybeSingle();
-    if (cErr) throw cErr;
-    if (!cluster) return { careers: [], unknownCluster: true } as const;
-
-    const { data: tagRows, error: tErr } = await supabase
-      .from("career_cluster_tags")
-      .select("career_id")
-      .eq("cluster_id", cluster.id);
-    if (tErr) throw tErr;
-    const taggedIds = (tagRows ?? []).map((r: any) => r.career_id);
-
-    let query = supabase
-      .from("careers")
-      .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id")
-      .eq("status", "published");
-
-    if (taggedIds.length > 0) {
-      const ids = taggedIds.map((i) => `"${i}"`).join(",");
-      query = query.or(`primary_cluster_id.eq.${cluster.id},id.in.(${ids})`);
-    } else {
-      query = query.eq("primary_cluster_id", cluster.id);
-    }
-    const { data, error } = await query.order("title");
-    if (error) throw error;
-    return { careers: data ?? [], unknownCluster: false } as const;
-  }
-
+export async function fetchPublishedCareers() {
   const { data, error } = await supabase
     .from("careers")
     .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured")
     .eq("status", "published")
     .order("title");
   if (error) throw error;
-  return { careers: data ?? [], unknownCluster: false } as const;
+  return data ?? [];
+}
+
+export async function fetchPublishedCareersByCluster(clusterSlug: string) {
+  const { data: cluster, error: cErr } = await supabase
+    .from("acte_clusters")
+    .select("id")
+    .eq("slug", clusterSlug)
+    .maybeSingle();
+  if (cErr) throw cErr;
+  if (!cluster) return { careers: [], unknownCluster: true as const };
+
+  const { data: tagRows, error: tErr } = await supabase
+    .from("career_cluster_tags")
+    .select("career_id")
+    .eq("cluster_id", cluster.id);
+  if (tErr) throw tErr;
+  const taggedIds = (tagRows ?? []).map((r: any) => r.career_id as string);
+
+  let query = supabase
+    .from("careers")
+    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id")
+    .eq("status", "published");
+
+  if (taggedIds.length > 0) {
+    query = query.or(`primary_cluster_id.eq.${cluster.id},id.in.(${taggedIds.join(",")})`);
+  } else {
+    query = query.eq("primary_cluster_id", cluster.id);
+  }
+  const { data, error } = await query.order("title");
+  if (error) throw error;
+  return { careers: data ?? [], unknownCluster: false as const };
 }
 
 export async function fetchPublishedCompanies() {
