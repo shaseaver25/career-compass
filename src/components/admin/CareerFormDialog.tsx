@@ -44,6 +44,7 @@ export type CareerEditing = {
   skills?: string[];
   tech_tags?: string[];
   primary_cluster_id?: string | null;
+  primary_sub_cluster_id?: string | null;
   status?: string;
 } | null;
 
@@ -66,6 +67,17 @@ export function CareerFormDialog({
       return data ?? [];
     },
   });
+  const subClusters = useQuery({
+    queryKey: ["acte_sub_clusters_all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("acte_sub_clusters")
+        .select("id, name, slug, cluster_id, display_order")
+        .order("display_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -83,6 +95,8 @@ export function CareerFormDialog({
   const [techInput, setTechInput] = useState("");
   const [primaryClusterId, setPrimaryClusterId] = useState<string>("");
   const [secondaryClusterIds, setSecondaryClusterIds] = useState<string[]>([]);
+  const [primarySubClusterId, setPrimarySubClusterId] = useState<string>("");
+  const [secondarySubClusterIds, setSecondarySubClusterIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Hydrate when editing changes
@@ -102,6 +116,7 @@ export function CareerFormDialog({
     setSkills(e.skills ?? []);
     setTechTags(e.tech_tags ?? []);
     setPrimaryClusterId(e.primary_cluster_id ?? "");
+    setPrimarySubClusterId(e.primary_sub_cluster_id ?? "");
     setSkillInput(""); setTechInput("");
     // Load secondary tags if editing
     if (e.id) {
@@ -109,8 +124,13 @@ export function CareerFormDialog({
         const secondary = (data ?? []).filter((r: any) => !r.is_primary).map((r: any) => r.cluster_id as string);
         setSecondaryClusterIds(secondary);
       });
+      supabase.from("career_sub_cluster_tags").select("sub_cluster_id, is_primary").eq("career_id", e.id).then(({ data }) => {
+        const secondary = (data ?? []).filter((r: any) => !r.is_primary).map((r: any) => r.sub_cluster_id as string);
+        setSecondarySubClusterIds(secondary);
+      });
     } else {
       setSecondaryClusterIds([]);
+      setSecondarySubClusterIds([]);
     }
   }, [editing, open]);
 
@@ -140,6 +160,21 @@ export function CareerFormDialog({
   const toggleSecondary = (id: string) => {
     setSecondaryClusterIds((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
+  const toggleSecondarySub = (id: string) => {
+    setSecondarySubClusterIds((prev) => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  // Sub-clusters for the currently selected primary cluster
+  const pathwaysForPrimary = useMemo(() => {
+    return (subClusters.data ?? []).filter((s: any) => s.cluster_id === primaryClusterId);
+  }, [subClusters.data, primaryClusterId]);
+
+  // Reset primary sub-cluster if it no longer belongs to the new primary cluster
+  useEffect(() => {
+    if (!primarySubClusterId) return;
+    const stillValid = pathwaysForPrimary.some((p: any) => p.id === primarySubClusterId);
+    if (!stillValid) setPrimarySubClusterId("");
+  }, [primaryClusterId, pathwaysForPrimary, primarySubClusterId]);
 
   const addSkill = () => {
     const v = skillInput.trim();
@@ -174,6 +209,7 @@ export function CareerFormDialog({
       skills,
       tech_tags: techTags,
       primary_cluster_id: primaryClusterId,
+      primary_sub_cluster_id: primarySubClusterId || null,
     };
 
     let careerId = editing?.id;
@@ -197,6 +233,21 @@ export function CareerFormDialog({
       ];
       const { error: tagErr } = await supabase.from("career_cluster_tags").insert(rows);
       if (tagErr) { setSaving(false); return toast.error(`Saved career, but tags failed: ${tagErr.message}`); }
+
+      // Sync sub-cluster (pathway) tags
+      await supabase.from("career_sub_cluster_tags").delete().eq("career_id", careerId);
+      const subRows: { career_id: string; sub_cluster_id: string; is_primary: boolean }[] = [];
+      if (primarySubClusterId) {
+        subRows.push({ career_id: careerId, sub_cluster_id: primarySubClusterId, is_primary: true });
+      }
+      for (const id of secondarySubClusterIds) {
+        if (id === primarySubClusterId) continue;
+        subRows.push({ career_id: careerId, sub_cluster_id: id, is_primary: false });
+      }
+      if (subRows.length > 0) {
+        const { error: subErr } = await supabase.from("career_sub_cluster_tags").insert(subRows);
+        if (subErr) { setSaving(false); return toast.error(`Saved career, but pathways failed: ${subErr.message}`); }
+      }
     }
 
     setSaving(false);
@@ -329,6 +380,52 @@ export function CareerFormDialog({
                   </label>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Primary pathway (depends on primary cluster) */}
+          <div>
+            <Label>Primary pathway (optional)</Label>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+              Minnesota Programs of Study within the selected primary cluster.
+            </p>
+            <Select
+              value={primarySubClusterId || "__none__"}
+              onValueChange={(v) => setPrimarySubClusterId(v === "__none__" ? "" : v)}
+              disabled={!primaryClusterId || pathwaysForPrimary.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={!primaryClusterId ? "Select a primary cluster first" : pathwaysForPrimary.length === 0 ? "No pathways yet" : "Select a pathway"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— None —</SelectItem>
+                {pathwaysForPrimary.map((p: any) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Secondary pathways (any cluster) */}
+          <div>
+            <Label>Also in these pathways (optional)</Label>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+              Cross-cluster pathways are allowed.
+            </p>
+            <div className="grid grid-cols-2 gap-2 rounded-lg border border-border p-3 max-h-56 overflow-y-auto">
+              {(subClusters.data ?? [])
+                .filter((s: any) => s.id !== primarySubClusterId)
+                .map((s: any) => {
+                  const checked = secondarySubClusterIds.includes(s.id);
+                  const parent = (clusters.data ?? []).find((c: any) => c.id === s.cluster_id);
+                  return (
+                    <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox checked={checked} onCheckedChange={() => toggleSecondarySub(s.id)} />
+                      <span className="truncate">{s.name}</span>
+                      {parent && <span className="text-[10px] text-muted-foreground truncate">· {parent.name}</span>}
+                    </label>
+                  );
+                })}
             </div>
           </div>
 
