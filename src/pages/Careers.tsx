@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Construction } from "lucide-react";
 import { fetchPublishedCareers, fetchPublishedCareersByCluster } from "@/lib/queries";
 import { CareerCard } from "@/components/cards/CareerCard";
 import { SEO } from "@/components/SEO";
@@ -24,6 +24,9 @@ const Careers = () => {
     enabled: !!clusterSlug,
   });
   const unknownCluster = !!clusterSlug && clusterQuery.data?.unknownCluster === true;
+  const clusterMeta = clusterQuery.data && !clusterQuery.data.unknownCluster ? (clusterQuery.data as any).cluster : null;
+  const clusterColor: string | null = clusterMeta?.acte_cluster_groupings?.color_hex ?? null;
+  const clusterName: string | null = clusterMeta?.name ?? null;
   const careers = clusterSlug
     ? (unknownCluster ? (allCareersQuery.data ?? []) : (clusterQuery.data?.careers ?? []))
     : (allCareersQuery.data ?? []);
@@ -80,7 +83,8 @@ const Careers = () => {
       <section className="container py-10">
         {clusterSlug && !unknownCluster && (
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs">
-            Filtered by cluster: <span className="font-semibold">{clusterSlug}</span>
+            {clusterColor && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: clusterColor }} aria-hidden />}
+            Filtered by cluster: <span className="font-semibold">{clusterName ?? clusterSlug}</span>
             <button onClick={() => setParams(p => { p.delete("cluster"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
           </div>
         )}
@@ -92,7 +96,23 @@ const Careers = () => {
         <div className="mb-4 text-sm text-muted-foreground">{filtered.length} {filtered.length === 1 ? "career" : "careers"}</div>
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-44 rounded-2xl bg-muted animate-pulse" />)}</div>
-        ) : filtered.length === 0 ? <EmptyState title="No careers match your filters" description="Try clearing a filter or searching for something else." /> : (
+        ) : filtered.length === 0 ? (
+          clusterSlug && !unknownCluster && clusterName ? (
+            <div className="rounded-2xl border border-dashed border-border bg-surface/40 p-10 text-center">
+              <div className="mb-3 flex justify-center">
+                <Construction className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className="font-semibold">Under construction</div>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                We're still recruiting Minnesota employers for the <span className="font-medium text-foreground">{clusterName}</span> cluster.
+                Want to nominate a company?{" "}
+                <a href="mailto:hello@careercompass.mn" className="text-primary underline-offset-2 hover:underline">Email us</a>.
+              </p>
+            </div>
+          ) : (
+            <EmptyState title="No careers match your filters" description="Try clearing a filter or searching for something else." />
+          )
+        ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(c => <CareerCard key={c.id} c={c} />)}</div>
         )}
       </section>
