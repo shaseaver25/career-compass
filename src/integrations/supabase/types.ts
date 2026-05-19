@@ -56,6 +56,7 @@ export type Database = {
           grouping_id: string
           icon_name: string | null
           id: string
+          is_cross_cutting: boolean
           name: string
           slug: string
         }
@@ -67,6 +68,7 @@ export type Database = {
           grouping_id: string
           icon_name?: string | null
           id?: string
+          is_cross_cutting?: boolean
           name: string
           slug: string
         }
@@ -78,6 +80,7 @@ export type Database = {
           grouping_id?: string
           icon_name?: string | null
           id?: string
+          is_cross_cutting?: boolean
           name?: string
           slug?: string
         }
@@ -87,6 +90,44 @@ export type Database = {
             columns: ["grouping_id"]
             isOneToOne: false
             referencedRelation: "acte_cluster_groupings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acte_sub_clusters: {
+        Row: {
+          cluster_id: string
+          code: string
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          cluster_id: string
+          code: string
+          created_at?: string
+          display_order: number
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          cluster_id?: string
+          code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acte_sub_clusters_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_clusters"
             referencedColumns: ["id"]
           },
         ]
@@ -210,6 +251,49 @@ export type Database = {
           },
         ]
       }
+      career_sub_cluster_tags: {
+        Row: {
+          career_id: string
+          created_at: string
+          is_primary: boolean
+          sub_cluster_id: string
+        }
+        Insert: {
+          career_id: string
+          created_at?: string
+          is_primary?: boolean
+          sub_cluster_id: string
+        }
+        Update: {
+          career_id?: string
+          created_at?: string
+          is_primary?: boolean
+          sub_cluster_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "career_sub_cluster_tags_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "careers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "career_sub_cluster_tags_career_id_fkey"
+            columns: ["career_id"]
+            isOneToOne: false
+            referencedRelation: "v_careers_with_cluster"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "career_sub_cluster_tags_sub_cluster_id_fkey"
+            columns: ["sub_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_sub_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       careers: {
         Row: {
           created_at: string
@@ -222,6 +306,7 @@ export type Database = {
           median_salary: number | null
           onet_code: string | null
           primary_cluster_id: string | null
+          primary_sub_cluster_id: string | null
           short_description: string | null
           skills: string[]
           slug: string
@@ -244,6 +329,7 @@ export type Database = {
           median_salary?: number | null
           onet_code?: string | null
           primary_cluster_id?: string | null
+          primary_sub_cluster_id?: string | null
           short_description?: string | null
           skills?: string[]
           slug: string
@@ -266,6 +352,7 @@ export type Database = {
           median_salary?: number | null
           onet_code?: string | null
           primary_cluster_id?: string | null
+          primary_sub_cluster_id?: string | null
           short_description?: string | null
           skills?: string[]
           slug?: string
@@ -281,6 +368,13 @@ export type Database = {
             columns: ["primary_cluster_id"]
             isOneToOne: false
             referencedRelation: "acte_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "careers_primary_sub_cluster_id_fkey"
+            columns: ["primary_sub_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_sub_clusters"
             referencedColumns: ["id"]
           },
         ]
@@ -737,26 +831,30 @@ export type Database = {
       v_careers_with_cluster: {
         Row: {
           cluster_code: string | null
+          cluster_is_cross_cutting: boolean | null
           cluster_name: string | null
           cluster_slug: string | null
           created_at: string | null
           description: string | null
           education_level: Database["public"]["Enums"]["education_level"] | null
           featured: boolean | null
-          grouping_code: string | null
-          grouping_color: string | null
-          grouping_name: string | null
+          field_code: string | null
+          field_color: string | null
+          field_name: string | null
           growth_outlook: Database["public"]["Enums"]["growth_outlook"] | null
           id: string | null
           industry: string | null
-          is_cross_cutting: boolean | null
           median_salary: number | null
           onet_code: string | null
           primary_cluster_id: string | null
+          primary_sub_cluster_id: string | null
           short_description: string | null
           skills: string[] | null
           slug: string | null
           status: Database["public"]["Enums"]["content_status"] | null
+          sub_cluster_code: string | null
+          sub_cluster_name: string | null
+          sub_cluster_slug: string | null
           tech_tags: string[] | null
           title: string | null
           typical_day: string | null
@@ -768,6 +866,13 @@ export type Database = {
             columns: ["primary_cluster_id"]
             isOneToOne: false
             referencedRelation: "acte_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "careers_primary_sub_cluster_id_fkey"
+            columns: ["primary_sub_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_sub_clusters"
             referencedColumns: ["id"]
           },
         ]
