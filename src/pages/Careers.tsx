@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Construction } from "lucide-react";
 import { fetchPublishedCareers, fetchPublishedCareersByCluster } from "@/lib/queries";
+import { fetchCareerFieldsAndClusters } from "@/lib/queries";
 import { CareerCard } from "@/components/cards/CareerCard";
 import { SEO } from "@/components/SEO";
 import { educationLabel, growthLabel } from "@/lib/format";
@@ -13,11 +14,12 @@ import { EmptyState } from "@/components/EmptyState";
 const Careers = () => {
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState(params.get("q") ?? "");
-  const [industry, setIndustry] = useState("all");
   const [growth, setGrowth] = useState("all");
   const [edu, setEdu] = useState("all");
   const clusterSlug = params.get("cluster");
   const pathwaySlug = params.get("pathway");
+  const wheelQuery = useQuery({ queryKey: ["wheel-fields-clusters"], queryFn: fetchCareerFieldsAndClusters });
+  const allClusters = (wheelQuery.data?.clusters ?? []) as Array<{ id: string; name: string; slug: string; display_order: number }>;
   const allCareersQuery = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers, enabled: !clusterSlug });
   const clusterQuery = useQuery({
     queryKey: ["careers", "cluster", clusterSlug, pathwaySlug],
@@ -43,18 +45,16 @@ const Careers = () => {
     return () => clearTimeout(t);
   }, [q, setParams]);
 
-  const industries = useMemo(() => Array.from(new Set(careersList.map((c: any) => c.industry).filter(Boolean))) as string[], [careersList]);
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return careersList.filter((c: any) => {
-      if (industry !== "all" && c.industry !== industry) return false;
       if (growth !== "all" && c.growth_outlook !== growth) return false;
       if (edu !== "all" && c.education_level !== edu) return false;
       if (!term) return true;
       const hay = `${c.title} ${c.short_description ?? ""} ${(c.skills ?? []).join(" ")} ${c.industry ?? ""}`.toLowerCase();
       return hay.includes(term);
     });
-  }, [careersList, q, industry, growth, edu]);
+  }, [careersList, q, growth, edu]);
 
   return (
     <>
@@ -68,9 +68,19 @@ const Careers = () => {
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search careers, skills, keywords" className="border-0 shadow-none focus-visible:ring-0" />
             </div>
-            <Select value={industry} onValueChange={setIndustry}>
-              <SelectTrigger className="md:w-44"><SelectValue placeholder="Industry" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">All industries</SelectItem>{industries.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+            <Select
+              value={clusterSlug ?? "all"}
+              onValueChange={(v) => setParams(p => {
+                if (v === "all") { p.delete("cluster"); p.delete("pathway"); }
+                else { p.set("cluster", v); p.delete("pathway"); }
+                return p;
+              }, { replace: true })}
+            >
+              <SelectTrigger className="md:w-56"><SelectValue placeholder="Career cluster" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All clusters</SelectItem>
+                {allClusters.map(cl => <SelectItem key={cl.id} value={cl.slug}>{cl.name}</SelectItem>)}
+              </SelectContent>
             </Select>
             <Select value={growth} onValueChange={setGrowth}>
               <SelectTrigger className="md:w-44"><SelectValue placeholder="Growth" /></SelectTrigger>
