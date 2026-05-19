@@ -17,16 +17,19 @@ const Careers = () => {
   const [growth, setGrowth] = useState("all");
   const [edu, setEdu] = useState("all");
   const clusterSlug = params.get("cluster");
+  const pathwaySlug = params.get("pathway");
   const allCareersQuery = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers, enabled: !clusterSlug });
   const clusterQuery = useQuery({
-    queryKey: ["careers", "cluster", clusterSlug],
-    queryFn: () => fetchPublishedCareersByCluster(clusterSlug as string),
+    queryKey: ["careers", "cluster", clusterSlug, pathwaySlug],
+    queryFn: () => fetchPublishedCareersByCluster(clusterSlug as string, pathwaySlug),
     enabled: !!clusterSlug,
   });
   const unknownCluster = !!clusterSlug && clusterQuery.data?.unknownCluster === true;
   const clusterMeta = clusterQuery.data && !clusterQuery.data.unknownCluster ? (clusterQuery.data as any).cluster : null;
   const clusterColor: string | null = clusterMeta?.acte_cluster_groupings?.color_hex ?? null;
   const clusterName: string | null = clusterMeta?.name ?? null;
+  const pathwayMeta = clusterQuery.data && !clusterQuery.data.unknownCluster ? (clusterQuery.data as any).pathway : null;
+  const pathwayName: string | null = pathwayMeta?.name ?? null;
   const careers = clusterSlug
     ? (unknownCluster ? (allCareersQuery.data ?? []) : (clusterQuery.data?.careers ?? []))
     : (allCareersQuery.data ?? []);
@@ -84,8 +87,8 @@ const Careers = () => {
         {clusterSlug && !unknownCluster && (
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs">
             {clusterColor && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: clusterColor }} aria-hidden />}
-            Filtered by cluster: <span className="font-semibold">{clusterName ?? clusterSlug}</span>
-            <button onClick={() => setParams(p => { p.delete("cluster"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
+            Filtered by: <span className="font-semibold">{clusterName ?? clusterSlug}{pathwayName ? ` · ${pathwayName}` : ""}</span>
+            <button onClick={() => setParams(p => { p.delete("cluster"); p.delete("pathway"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
           </div>
         )}
         {unknownCluster && (
@@ -104,7 +107,11 @@ const Careers = () => {
               </div>
               <div className="font-semibold">Under construction</div>
               <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
-                We're still recruiting Minnesota employers for the <span className="font-medium text-foreground">{clusterName}</span> cluster.
+                {pathwayName ? (
+                  <>We're still recruiting Minnesota employers for the <span className="font-medium text-foreground">{pathwayName}</span> pathway in <span className="font-medium text-foreground">{clusterName}</span>.</>
+                ) : (
+                  <>We're still recruiting Minnesota employers for the <span className="font-medium text-foreground">{clusterName}</span> cluster.</>
+                )}{" "}
                 Want to nominate a company?{" "}
                 <a href="mailto:hello@careercompass.mn" className="text-primary underline-offset-2 hover:underline">Email us</a>.
               </p>

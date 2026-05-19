@@ -10,25 +10,35 @@ export async function fetchPublishedCareers() {
   return data ?? [];
 }
 
-export async function fetchPublishedCareersByCluster(clusterSlug: string) {
+export async function fetchPublishedCareersByCluster(clusterSlug: string, pathwaySlug?: string | null) {
   const { data: cluster, error: cErr } = await supabase
     .from("acte_clusters")
-    .select("id, name, slug, grouping_id, acte_cluster_groupings(name, color_hex)")
+    .select("id, name, slug, grouping_id, is_cross_cutting, acte_cluster_groupings(name, color_hex)")
     .eq("slug", clusterSlug)
     .maybeSingle();
   if (cErr) throw cErr;
-  if (!cluster) return { careers: [], cluster: null, unknownCluster: true as const };
+  if (!cluster) return { careers: [], cluster: null, pathway: null, unknownCluster: true as const, unknownPathway: false as const };
+
+  let pathway: any = null;
+  if (pathwaySlug) {
+    const { data: sc, error: sErr } = await supabase
+      .from("acte_sub_clusters")
+      .select("id, name, slug, cluster_id")
+      .eq("slug", pathwaySlug)
+      .maybeSingle();
+    if (sErr) throw sErr;
+    if (!sc) return { careers: [], cluster, pathway: null, unknownCluster: false as const, unknownPathway: true as const };
+    pathway = sc;
+  }
 
   const { data: tagRows, error: tErr } = await supabase
-    .from("career_cluster_tags")
-    .select("career_id")
-    .eq("cluster_id", cluster.id);
+    .from("career_cluster_tags").select("career_id").eq("cluster_id", cluster.id);
   if (tErr) throw tErr;
   const taggedIds = (tagRows ?? []).map((r: any) => r.career_id as string);
 
   let query = supabase
     .from("careers")
-    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id")
+    .select("id, slug, title, short_description, median_salary, growth_outlook, industry, education_level, skills, featured, primary_cluster_id, primary_sub_cluster_id")
     .eq("status", "published");
 
   if (taggedIds.length > 0) {
@@ -38,7 +48,39 @@ export async function fetchPublishedCareersByCluster(clusterSlug: string) {
   }
   const { data, error } = await query.order("title");
   if (error) throw error;
-  return { careers: data ?? [], cluster, unknownCluster: false as const };
+  let careers = data ?? [];
+
+  if (pathway) {
+    const { data: subTagRows } = await supabase
+      .from("career_sub_cluster_tags").select("career_id").eq("sub_cluster_id", pathway.id);
+    const subTaggedIds = new Set((subTagRows ?? []).map((r: any) => r.career_id as string));
+    careers = careers.filter((c: any) => c.primary_sub_cluster_id === pathway.id || subTaggedIds.has(c.id));
+  }
+
+  return { careers, cluster, pathway, unknownCluster: false as const, unknownPathway: false as const };
+}
+
+export async function fetchCareerFieldsAndClusters() {
+  const { data: fields, error: fErr } = await supabase
+    .from("acte_cluster_groupings")
+    .select("id, code, name, slug:code, color_hex, description, display_order")
+    .order("display_order");
+  if (fErr) throw fErr;
+  const { data: clusters, error: cErr } = await supabase
+    .from("acte_clusters")
+    .select("id, code, name, slug, description, grouping_id, is_cross_cutting, display_order")
+    .order("display_order");
+  if (cErr) throw cErr;
+  const { data: subs, error: sErr } = await supabase
+    .from("acte_sub_clusters")
+    .select("id, code, name, slug, cluster_id, display_order")
+    .order("display_order");
+  if (sErr) throw sErr;
+  return {
+    fields: fields ?? [],
+    clusters: clusters ?? [],
+    subClusters: subs ?? [],
+  };
 }
 
 export async function fetchPublishedCompanies() {
