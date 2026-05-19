@@ -60,7 +60,7 @@ const Admin = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("careers")
-        .select("id, slug, title, status, industry, tech_tags, primary_cluster_id, updated_at, acte_clusters!careers_primary_cluster_id_fkey(id, name, acte_cluster_groupings(name, color_hex))")
+        .select("id, slug, title, status, industry, tech_tags, primary_cluster_id, primary_sub_cluster_id, updated_at, acte_clusters!careers_primary_cluster_id_fkey(id, name, acte_cluster_groupings(name, color_hex)), acte_sub_clusters!careers_primary_sub_cluster_id_fkey(id, name)")
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -204,6 +204,7 @@ const Admin = () => {
                     <tr>
                       <th className="text-left px-4 py-2.5 font-medium">Title</th>
                       <th className="text-left px-4 py-2.5 font-medium">Cluster</th>
+                      <th className="text-left px-4 py-2.5 font-medium">Pathway</th>
                       <th className="text-left px-4 py-2.5 font-medium">Tech tags</th>
                       <th className="text-left px-4 py-2.5 font-medium">Status</th>
                       <th className="px-4 py-2.5" />
@@ -213,6 +214,7 @@ const Admin = () => {
                     {(adminCareers.data ?? []).map((c: any) => {
                       const cluster = c.acte_clusters;
                       const color = cluster?.acte_cluster_groupings?.color_hex;
+                      const pathway = c.acte_sub_clusters;
                       const tags: string[] = c.tech_tags ?? [];
                       const isUntagged = c.status === "published" && !c.primary_cluster_id;
                       return (
@@ -232,6 +234,9 @@ const Admin = () => {
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {pathway?.name ? <span>{pathway.name}</span> : <span className="text-muted-foreground">—</span>}
                           </td>
                           <td className="px-4 py-3">
                             {tags.length === 0 ? <span className="text-muted-foreground">—</span> : (
