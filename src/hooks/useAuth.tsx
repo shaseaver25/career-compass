@@ -76,7 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     // Safety net: never hang forever.
     const timeout = setTimeout(markResolved, 4000);
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      sub.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
