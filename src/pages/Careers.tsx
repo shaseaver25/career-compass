@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Construction } from "lucide-react";
 import { fetchPublishedCareers, fetchPublishedCareersByCluster } from "@/lib/queries";
-import { fetchCareerFieldsAndClusters } from "@/lib/queries";
+import { fetchCareerFieldsAndClusters, fetchConsortiumMembership } from "@/lib/queries";
 import { CareerCard } from "@/components/cards/CareerCard";
 import { SEO } from "@/components/SEO";
 import { educationLabel, growthLabel } from "@/lib/format";
@@ -18,6 +18,17 @@ const Careers = () => {
   const [edu, setEdu] = useState("all");
   const clusterSlug = params.get("cluster");
   const pathwaySlug = params.get("pathway");
+  const consortiumCode = params.get("consortium");
+  const consortiumQuery = useQuery({
+    queryKey: ["consortium-membership", consortiumCode],
+    queryFn: () => fetchConsortiumMembership(consortiumCode as string),
+    enabled: !!consortiumCode,
+  });
+  const consortiumCareerIdSet = useMemo(
+    () => new Set((consortiumQuery.data?.careerIds ?? []) as string[]),
+    [consortiumQuery.data]
+  );
+  const consortiumName = consortiumQuery.data?.consortium?.name ?? null;
   const wheelQuery = useQuery({ queryKey: ["wheel-fields-clusters"], queryFn: fetchCareerFieldsAndClusters });
   const allClusters = (wheelQuery.data?.clusters ?? []) as Array<{ id: string; name: string; slug: string; display_order: number }>;
   const allCareersQuery = useQuery({ queryKey: ["careers"], queryFn: fetchPublishedCareers, enabled: !clusterSlug });
@@ -50,11 +61,12 @@ const Careers = () => {
     return careersList.filter((c: any) => {
       if (growth !== "all" && c.growth_outlook !== growth) return false;
       if (edu !== "all" && c.education_level !== edu) return false;
+      if (consortiumCode && !consortiumCareerIdSet.has(c.id)) return false;
       if (!term) return true;
       const hay = `${c.title} ${c.short_description ?? ""} ${(c.skills ?? []).join(" ")} ${c.industry ?? ""}`.toLowerCase();
       return hay.includes(term);
     });
-  }, [careersList, q, growth, edu]);
+  }, [careersList, q, growth, edu, consortiumCode, consortiumCareerIdSet]);
 
   return (
     <>
@@ -99,6 +111,12 @@ const Careers = () => {
             {clusterColor && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: clusterColor }} aria-hidden />}
             Filtered by: <span className="font-semibold">{clusterName ?? clusterSlug}{pathwayName ? ` · ${pathwayName}` : ""}</span>
             <button onClick={() => setParams(p => { p.delete("cluster"); p.delete("pathway"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
+          </div>
+        )}
+        {consortiumCode && (
+          <div className="mb-4 ml-2 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs">
+            Region: <span className="font-semibold">{consortiumName ?? consortiumCode}</span>
+            <button onClick={() => setParams(p => { p.delete("consortium"); return p; }, { replace: true })} className="text-muted-foreground hover:text-foreground">clear ×</button>
           </div>
         )}
         {unknownCluster && (
