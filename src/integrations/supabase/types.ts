@@ -391,6 +391,7 @@ export type Database = {
           mn_employees: number | null
           name: string
           owner_id: string | null
+          parent_company_id: string | null
           slug: string
           source: string | null
           status: Database["public"]["Enums"]["content_status"]
@@ -408,6 +409,7 @@ export type Database = {
           mn_employees?: number | null
           name: string
           owner_id?: string | null
+          parent_company_id?: string | null
           slug: string
           source?: string | null
           status?: Database["public"]["Enums"]["content_status"]
@@ -425,13 +427,22 @@ export type Database = {
           mn_employees?: number | null
           name?: string
           owner_id?: string | null
+          parent_company_id?: string | null
           slug?: string
           source?: string | null
           status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_parent_company_id_fkey"
+            columns: ["parent_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_careers: {
         Row: {
