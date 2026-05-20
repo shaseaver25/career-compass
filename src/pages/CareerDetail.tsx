@@ -10,6 +10,7 @@ import { CompanyCard } from "@/components/cards/CompanyCard";
 import { InterviewCard } from "@/components/InterviewCard";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { EmptyState } from "@/components/EmptyState";
+import { Helmet } from "react-helmet-async";
 
 const stepIcon: any = { course: BookOpen, certification: Sparkles, degree: GraduationCap, experience: Wrench };
 
@@ -24,9 +25,28 @@ const CareerDetail = () => {
     </div>
   );
   const { career, steps, companies, interviews } = data;
+  const occupationLd = {
+    "@context": "https://schema.org",
+    "@type": "Occupation",
+    name: career.title,
+    description: career.description ?? career.short_description ?? undefined,
+    occupationalCategory: career.industry ?? undefined,
+    estimatedSalary: career.median_salary
+      ? {
+          "@type": "MonetaryAmountDistribution",
+          name: "base",
+          currency: "USD",
+          median: career.median_salary,
+        }
+      : undefined,
+    skills: (career.skills ?? []).join(", ") || undefined,
+  };
   return (
     <>
       <SEO title={career.title} description={career.short_description ?? undefined} path={`/careers/${slug}`} />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(occupationLd)}</script>
+      </Helmet>
       <section className="border-b border-border/60 bg-surface">
         <div className="container py-10">
           <Link to="/careers" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="mr-1 h-4 w-4" />All careers</Link>
