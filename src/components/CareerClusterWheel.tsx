@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { fetchCareerFieldsAndClusters } from "@/lib/queries";
+import { MN_OUTLINE_PATH } from "./mnOutline";
 
 type Field = { id: string; code: string; name: string; color_hex: string; description: string | null; display_order: number };
 type Cluster = { id: string; code: string; name: string; slug: string; description: string | null; grouping_id: string; is_cross_cutting: boolean; display_order: number };
