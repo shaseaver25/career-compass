@@ -280,12 +280,12 @@ export function CareerClusterWheel({
                 <path d={MN_OUTLINE_PATH} strokeLinejoin="round" />
               </g>
               <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="central"
-                    fontSize="13" fontWeight={700} fill="white"
+                    fontSize="13" fontWeight={700} fill={OUTER_NAVY}
                     style={{ pointerEvents: "none" }}>
                 Career-Ready
               </text>
               <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="central"
-                    fontSize="13" fontWeight={700} fill="white"
+                    fontSize="13" fontWeight={700} fill={OUTER_NAVY}
                     style={{ pointerEvents: "none" }}>
                 Practices
               </text>
