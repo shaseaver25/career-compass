@@ -9,6 +9,7 @@ import { CareerCard } from "@/components/cards/CareerCard";
 import { VideoEmbed } from "@/components/VideoEmbed";
 import { InterviewCard } from "@/components/InterviewCard";
 import { BookmarkButton } from "@/components/BookmarkButton";
+import { Helmet } from "react-helmet-async";
 
 const CompanyDetail = () => {
   const { slug = "" } = useParams();
@@ -17,9 +18,27 @@ const CompanyDetail = () => {
   if (!data) return (<div className="container py-24 text-center"><h1 className="text-2xl font-bold">Company not found</h1><Button asChild className="mt-4" variant="outline"><Link to="/companies"><ArrowLeft className="mr-2 h-4 w-4" />Back to companies</Link></Button></div>);
   const { company, videos, careers, interviews, parent, children } = data as any;
   const primary = company.company_locations?.find((l: any) => l.is_primary) ?? company.company_locations?.[0];
+  const orgLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: company.name,
+    url: company.website ?? undefined,
+    logo: company.logo_url ?? undefined,
+    description: company.description ?? undefined,
+    address: primary
+      ? {
+          "@type": "PostalAddress",
+          addressLocality: primary.city,
+          addressRegion: primary.state,
+        }
+      : undefined,
+  };
   return (
     <>
       <SEO title={company.name} description={company.description ?? undefined} path={`/companies/${slug}`} />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(orgLd)}</script>
+      </Helmet>
       <section className="border-b border-border/60 bg-surface"><div className="container py-10">
         <Link to="/companies" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"><ArrowLeft className="mr-1 h-4 w-4" />All companies</Link>
         {parent && (

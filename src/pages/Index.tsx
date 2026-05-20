@@ -20,7 +20,7 @@ const Index = () => {
 
   return (
     <>
-      <SEO title="CTE Careers — Explore real careers and the companies that hire" description="Discover real careers, the skills they need, and the local companies hiring near you." path="/" />
+      <SEO title="CTE Careers — Explore careers and the companies that hire" description="Discover real careers, the skills they need, and the local companies hiring near you." path="/" />
 
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0 -z-10 gradient-hero opacity-95" />

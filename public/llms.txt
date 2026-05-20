@@ -1,0 +1,14 @@
+# CTE Careers
+
+> Discover real careers, the skills they need, and the Minnesota companies hiring for them. Built for high school students, teachers, and employers.
+
+## Pages
+
+- [Home](/): Overview of CTE Careers and featured content.
+- [Browse careers](/careers): Search hundreds of real careers with filters for industry, growth, and education.
+- [Explore career clusters](/explore): Interactive career cluster wheel based on the ACTE framework.
+- [Companies](/companies): Minnesota employers hiring for these careers, including state and federal agencies.
+
+## Optional
+
+- [Bookmarks](/bookmarks): Saved careers and companies (requires sign-in).
