@@ -258,12 +258,10 @@ export function CareerClusterWheel({
 
         {/* Center hub: white disc + MN silhouette + Career-Ready Practices label */}
         {(() => {
-          // MN outline path (native bounds ~ x:55-545, y:40-480 → 490×440)
-          const MN_PATH =
-            "M 90 40 L 130 40 L 130 70 L 470 70 L 480 95 L 500 110 L 530 150 L 545 200 L 510 235 L 470 270 L 445 305 L 425 345 L 460 380 L 450 430 L 470 480 L 90 480 L 60 470 L 55 380 L 60 280 L 70 180 L 80 90 Z";
-          const NATIVE_W = 490, NATIVE_H = 440, NATIVE_CX = 300, NATIVE_CY = 260;
-          // Fit silhouette inside the center disc with a small margin.
-          const scale = (rCenter * 1.55) / NATIVE_W;
+          // Real MN outline (native bounds ~ x:81.6-498.4, y:30-490)
+          const NATIVE_W = 417, NATIVE_H = 460, NATIVE_CX = 290, NATIVE_CY = 260;
+          // Silhouette height ~1.2 × rCenter → occupies ~55% of hub area.
+          const scale = (rCenter * 1.2) / NATIVE_H;
           const tx = cx - NATIVE_CX * scale;
           const ty = cy - NATIVE_CY * scale;
           return (
@@ -272,8 +270,13 @@ export function CareerClusterWheel({
               <circle cx={cx} cy={cy} r={rCenter}
                       fill="hsl(var(--card, 0 0% 100%))"
                       stroke={OUTER_NAVY} strokeWidth={1.5} />
-              <g transform={`translate(${tx} ${ty}) scale(${scale})`} fill={OUTER_NAVY}>
-                <path d={MN_PATH} strokeLinejoin="round" />
+              <g
+                transform={`translate(${tx} ${ty}) scale(${scale})`}
+                fill="hsl(var(--foreground))"
+                opacity={0.65}
+                aria-hidden="true"
+              >
+                <path d={MN_OUTLINE_PATH} strokeLinejoin="round" />
               </g>
               <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="central"
                     fontSize="13" fontWeight={700} fill="white"
