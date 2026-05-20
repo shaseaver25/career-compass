@@ -105,6 +105,16 @@ const Auth = () => {
     });
     if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
   };
+  const onForgotPassword = async () => {
+    if (!email) return toast.error("Enter your email above first.");
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Password reset link sent to ${email}.`);
+  };
   const header =
     mode === "sign-up" ? "Create your account" :
     mode === "magic" ? "Sign in with magic link" :
@@ -152,6 +162,9 @@ const Auth = () => {
               <div className="flex flex-col gap-1 text-xs text-muted-foreground">
                 {mode === "sign-in" && (
                   <>
+                    <button type="button" className="text-left underline-offset-2 hover:underline" onClick={onForgotPassword}>
+                      Forgot your password? Email me a reset link
+                    </button>
                     <button type="button" className="text-left underline-offset-2 hover:underline" onClick={() => setMode("sign-up")}>
                       New here? Create an account
                     </button>
