@@ -296,13 +296,19 @@ export type Database = {
       }
       careers: {
         Row: {
+          ai_cs_application: string | null
+          anchor_opportunity: Json | null
           created_at: string
           description: string | null
           education_level: Database["public"]["Enums"]["education_level"] | null
+          education_pathway_text: string | null
+          estimated_salary_high: number | null
+          estimated_salary_low: number | null
           featured: boolean
           growth_outlook: Database["public"]["Enums"]["growth_outlook"] | null
           id: string
           industry: string | null
+          media_resources: Json
           median_salary: number | null
           onet_code: string | null
           primary_cluster_id: string | null
@@ -315,17 +321,24 @@ export type Database = {
           title: string
           typical_day: string | null
           updated_at: string
+          where_mn_does_this: string | null
         }
         Insert: {
+          ai_cs_application?: string | null
+          anchor_opportunity?: Json | null
           created_at?: string
           description?: string | null
           education_level?:
             | Database["public"]["Enums"]["education_level"]
             | null
+          education_pathway_text?: string | null
+          estimated_salary_high?: number | null
+          estimated_salary_low?: number | null
           featured?: boolean
           growth_outlook?: Database["public"]["Enums"]["growth_outlook"] | null
           id?: string
           industry?: string | null
+          media_resources?: Json
           median_salary?: number | null
           onet_code?: string | null
           primary_cluster_id?: string | null
@@ -338,17 +351,24 @@ export type Database = {
           title: string
           typical_day?: string | null
           updated_at?: string
+          where_mn_does_this?: string | null
         }
         Update: {
+          ai_cs_application?: string | null
+          anchor_opportunity?: Json | null
           created_at?: string
           description?: string | null
           education_level?:
             | Database["public"]["Enums"]["education_level"]
             | null
+          education_pathway_text?: string | null
+          estimated_salary_high?: number | null
+          estimated_salary_low?: number | null
           featured?: boolean
           growth_outlook?: Database["public"]["Enums"]["growth_outlook"] | null
           id?: string
           industry?: string | null
+          media_resources?: Json
           median_salary?: number | null
           onet_code?: string | null
           primary_cluster_id?: string | null
@@ -361,6 +381,7 @@ export type Database = {
           title?: string
           typical_day?: string | null
           updated_at?: string
+          where_mn_does_this?: string | null
         }
         Relationships: [
           {
@@ -1010,6 +1031,7 @@ export type Database = {
       }
     }
     Functions: {
+      cluster_id: { Args: { _code: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1017,6 +1039,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      subcluster_id: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "company_rep" | "user"
