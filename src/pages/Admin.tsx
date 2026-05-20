@@ -10,6 +10,7 @@ import { Check, ExternalLink, Loader2, Pencil, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { CareerFormDialog, type CareerEditing } from "@/components/admin/CareerFormDialog";
+import { DeedDataTab } from "@/components/admin/DeedDataTab";
 
 type Status = "draft" | "pending" | "published" | "changes_requested";
 
@@ -98,6 +99,7 @@ const Admin = () => {
             <TabsTrigger value="companies">Companies <Badge variant="secondary" className="ml-2">{counts.companies}</Badge></TabsTrigger>
             <TabsTrigger value="interviews">Interviews <Badge variant="secondary" className="ml-2">{counts.interviews}</Badge></TabsTrigger>
             <TabsTrigger value="careers">Careers <Badge variant="secondary" className="ml-2">{counts.careers}</Badge></TabsTrigger>
+            <TabsTrigger value="data">Data</TabsTrigger>
           </TabsList>
 
           <TabsContent value="companies" className="mt-6">
@@ -259,6 +261,10 @@ const Admin = () => {
                 </table>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="data" className="mt-6">
+            <DeedDataTab />
           </TabsContent>
         </Tabs>
       </section>

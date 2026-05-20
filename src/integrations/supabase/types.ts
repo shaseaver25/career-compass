@@ -382,42 +382,51 @@ export type Database = {
       companies: {
         Row: {
           created_at: string
+          deed_rank: number | null
           description: string | null
           id: string
           industry: string | null
           logo_emoji: string | null
           logo_url: string | null
+          mn_employees: number | null
           name: string
           owner_id: string | null
           slug: string
+          source: string | null
           status: Database["public"]["Enums"]["content_status"]
           updated_at: string
           website: string | null
         }
         Insert: {
           created_at?: string
+          deed_rank?: number | null
           description?: string | null
           id?: string
           industry?: string | null
           logo_emoji?: string | null
           logo_url?: string | null
+          mn_employees?: number | null
           name: string
           owner_id?: string | null
           slug: string
+          source?: string | null
           status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
           website?: string | null
         }
         Update: {
           created_at?: string
+          deed_rank?: number | null
           description?: string | null
           id?: string
           industry?: string | null
           logo_emoji?: string | null
           logo_url?: string | null
+          mn_employees?: number | null
           name?: string
           owner_id?: string | null
           slug?: string
+          source?: string | null
           status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
           website?: string | null
@@ -520,6 +529,117 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      deed_employers: {
+        Row: {
+          business_description: string | null
+          created_at: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          matched_company_id: string | null
+          mn_employees: number
+          organization: string
+          rank: number
+          removed_from_source: boolean
+          source_last_modified: string | null
+          source_url: string
+          suggested_cluster_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_description?: string | null
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          matched_company_id?: string | null
+          mn_employees: number
+          organization: string
+          rank: number
+          removed_from_source?: boolean
+          source_last_modified?: string | null
+          source_url?: string
+          suggested_cluster_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_description?: string | null
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          matched_company_id?: string | null
+          mn_employees?: number
+          organization?: string
+          rank?: number
+          removed_from_source?: boolean
+          source_last_modified?: string | null
+          source_url?: string
+          suggested_cluster_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deed_employers_matched_company_id_fkey"
+            columns: ["matched_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deed_employers_suggested_cluster_id_fkey"
+            columns: ["suggested_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deed_sync_log: {
+        Row: {
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          ran_at: string
+          rows_added: number
+          rows_removed: number
+          rows_unchanged: number
+          rows_updated: number
+          source_file_hash: string | null
+          source_last_modified: string | null
+          status: string
+          triggered_by: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          ran_at?: string
+          rows_added?: number
+          rows_removed?: number
+          rows_unchanged?: number
+          rows_updated?: number
+          source_file_hash?: string | null
+          source_last_modified?: string | null
+          status: string
+          triggered_by: string
+        }
+        Update: {
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          ran_at?: string
+          rows_added?: number
+          rows_removed?: number
+          rows_unchanged?: number
+          rows_updated?: number
+          source_file_hash?: string | null
+          source_last_modified?: string | null
+          status?: string
+          triggered_by?: string
+        }
+        Relationships: []
       }
       interview_answers: {
         Row: {
