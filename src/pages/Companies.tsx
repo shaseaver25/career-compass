@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, ChevronDown, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import { fetchPublishedCompanies, fetchConsortiumMembership } from "@/lib/queries";
 import { CompanyCard } from "@/components/cards/CompanyCard";
 import { SEO } from "@/components/SEO";
