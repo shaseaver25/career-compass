@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import * as XLSX from "npm:xlsx@0.20.0";
+import * as XLSX from "npm:xlsx@0.18.5";
 
 const DEED_URL = "https://mn.gov/deed/assets/top-companies-employers_tcm1045-647715.xlsx";
 
