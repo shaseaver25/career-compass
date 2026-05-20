@@ -262,6 +262,10 @@ const Admin = () => {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="data" className="mt-6">
+            <DeedDataTab />
+          </TabsContent>
         </Tabs>
       </section>
       <CareerFormDialog open={careerDialogOpen} onOpenChange={setCareerDialogOpen} editing={careerEditing} />
