@@ -99,13 +99,19 @@ export async function fetchCareerFieldsAndClusters() {
 export async function fetchPublishedCompanies() {
   const { data, error } = await supabase
     .from("companies")
-    .select("id, slug, name, description, industry, logo_emoji, logo_url, company_locations(city, state, is_primary), company_careers(career_id)")
+    .select("id, slug, name, description, industry, logo_emoji, logo_url, parent_company_id, mn_employees, company_locations(city, state, is_primary), company_careers(career_id)")
     .eq("status", "published")
     .order("name");
   if (error) throw error;
-  return (data ?? []).map((c: any) => {
+  const rows = (data ?? []).map((c: any) => {
     const loc = c.company_locations?.find((l: any) => l.is_primary) ?? c.company_locations?.[0];
     return { ...c, city: loc?.city ?? null, state: loc?.state ?? null, careers_count: c.company_careers?.length ?? 0 };
+  });
+  // attach parent_name/parent_slug for any parent that exists in the published set
+  const byId = new Map(rows.map((c: any) => [c.id, c]));
+  return rows.map((c: any) => {
+    const p = c.parent_company_id ? byId.get(c.parent_company_id) : null;
+    return { ...c, parent_name: p?.name ?? null, parent_slug: p?.slug ?? null };
   });
 }
 
@@ -129,13 +135,46 @@ export async function fetchCompanyBySlug(slug: string) {
   const { data: company, error } = await supabase.from("companies").select("*, company_locations(*)").eq("slug", slug).eq("status", "published").maybeSingle();
   if (error) throw error;
   if (!company) return null;
-  const [{ data: videos }, { data: links }, { data: interviews }] = await Promise.all([
+  const [{ data: videos }, { data: links }, { data: interviews }, parentRes, childrenRes] = await Promise.all([
     supabase.from("videos").select("*").eq("company_id", company.id),
     supabase.from("company_careers").select("careers(id, slug, title, short_description, median_salary, growth_outlook, industry, status)").eq("company_id", company.id),
     supabase.from("interviews").select("id, interviewee_name, interviewee_role, audio_url, careers(slug, title), interview_answers(answer, interview_questions(question_order, prompt, short_label))").eq("company_id", company.id).eq("status", "published"),
+    company.parent_company_id
+      ? supabase.from("companies").select("id, slug, name").eq("id", company.parent_company_id).maybeSingle()
+      : Promise.resolve({ data: null } as any),
+    supabase.from("companies").select("id, slug, name, description, industry, logo_emoji, logo_url, mn_employees").eq("parent_company_id", company.id).eq("status", "published").order("mn_employees", { ascending: false, nullsFirst: false }),
   ]);
   const careers = (links ?? []).map((l: any) => l.careers).filter((c: any) => c && c.status === "published");
-  return { company, videos: videos ?? [], careers, interviews: interviews ?? [] };
+  return { company, videos: videos ?? [], careers, interviews: interviews ?? [], parent: (parentRes as any)?.data ?? null, children: (childrenRes as any)?.data ?? [] };
+}
+
+export async function fetchCompanyChildren(parentCompanyId: string) {
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, slug, name, description, industry, logo_emoji, logo_url, mn_employees")
+    .eq("parent_company_id", parentCompanyId)
+    .eq("status", "published")
+    .order("mn_employees", { ascending: false, nullsFirst: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchCompanyParent(companyId: string) {
+  const { data: me } = await supabase.from("companies").select("parent_company_id").eq("id", companyId).maybeSingle();
+  if (!me?.parent_company_id) return null;
+  const { data } = await supabase.from("companies").select("id, slug, name").eq("id", me.parent_company_id).maybeSingle();
+  return data ?? null;
+}
+
+/** Top-level companies (parent_company_id is null) for the admin parent picker. */
+export async function fetchTopLevelCompanies() {
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, name")
+    .is("parent_company_id", null)
+    .order("name");
+  if (error) throw error;
+  return data ?? [];
 }
 
 // ---------- Perkins consortia ----------

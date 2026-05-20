@@ -10,6 +10,7 @@ import { Check, ExternalLink, Loader2, Pencil, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { CareerFormDialog, type CareerEditing } from "@/components/admin/CareerFormDialog";
+import { CompanyFormDialog, type CompanyEditing } from "@/components/admin/CompanyFormDialog";
 import { DeedDataTab } from "@/components/admin/DeedDataTab";
 
 type Status = "draft" | "pending" | "published" | "changes_requested";
@@ -29,13 +30,15 @@ const Admin = () => {
   const qc = useQueryClient();
   const [careerDialogOpen, setCareerDialogOpen] = useState(false);
   const [careerEditing, setCareerEditing] = useState<CareerEditing>(null);
+  const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
+  const [companyEditing, setCompanyEditing] = useState<CompanyEditing>(null);
 
   const companies = useQuery({
     queryKey: ["admin-companies-pending"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
-        .select("id, slug, name, description, industry, logo_emoji, status, updated_at, company_locations(city, state, is_primary)")
+        .select("id, slug, name, description, industry, logo_emoji, website, parent_company_id, status, updated_at, company_locations(city, state, is_primary)")
         .in("status", ["pending", "draft"])
         .order("updated_at", { ascending: false });
       if (error) throw error;
@@ -128,6 +131,7 @@ const Admin = () => {
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Button size="sm" onClick={() => moderate("companies", c.id, "published", c.name)}><Check className="mr-1 h-4 w-4" />Publish</Button>
                         <Button size="sm" variant="outline" onClick={() => moderate("companies", c.id, "changes_requested", c.name)}><X className="mr-1 h-4 w-4" />Request changes</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setCompanyEditing(c as any); setCompanyDialogOpen(true); }}><Pencil className="mr-1 h-4 w-4" />Edit</Button>
                         <Button size="sm" variant="ghost" asChild><Link to={`/companies/${c.slug}`}>Preview <ExternalLink className="ml-1 h-3.5 w-3.5" /></Link></Button>
                       </div>
                     </article>
@@ -269,6 +273,7 @@ const Admin = () => {
         </Tabs>
       </section>
       <CareerFormDialog open={careerDialogOpen} onOpenChange={setCareerDialogOpen} editing={careerEditing} />
+      <CompanyFormDialog open={companyDialogOpen} onOpenChange={setCompanyDialogOpen} editing={companyEditing} />
     </>
   );
 };
