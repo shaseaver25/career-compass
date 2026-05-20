@@ -19,6 +19,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import InterviewNew from "./pages/InterviewNew.tsx";
 import Admin from "./pages/Admin.tsx";
 import Explore from "./pages/Explore.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/companies/:slug" element={<CompanyDetail />} />
                 <Route path="/bookmarks" element={<Bookmarks />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<RequireRole role="company_rep"><Dashboard /></RequireRole>} />
                 <Route path="/dashboard/interviews/new" element={<RequireRole role="company_rep"><InterviewNew /></RequireRole>} />
                 <Route path="/admin" element={<RequireRole role="admin"><Admin /></RequireRole>} />
