@@ -100,7 +100,7 @@ const Companies = () => {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {grouped.topLevelCards.map((c: any) => (
               c._children.length > 0
-                ? <ParentCompanyCard key={c.id} c={c} children={c._children} />
+                ? <ParentCompanyCard key={c.id} c={c} subs={c._children} />
                 : <CompanyCard key={c.id} c={c} />
             ))}
             {grouped.orphanChildren.map((c: any) => {
@@ -123,7 +123,7 @@ const Companies = () => {
   );
 };
 
-const ParentCompanyCard = ({ c, children }: { c: any; children: any[] }) => {
+const ParentCompanyCard = ({ c, subs }: { c: any; subs: any[] }) => {
   const [open, setOpen] = useState(true);
   return (
     <div className="sm:col-span-2 lg:col-span-4 rounded-2xl border border-border bg-card shadow-card overflow-hidden">
@@ -136,7 +136,7 @@ const ParentCompanyCard = ({ c, children }: { c: any; children: any[] }) => {
             <Link to={`/companies/${c.slug}`} className="font-bold leading-tight hover:underline">{c.name}</Link>
             <button onClick={() => setOpen(o => !o)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
               {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              {children.length} {children.length === 1 ? "department" : "departments"}
+              {subs.length} {subs.length === 1 ? "department" : "departments"}
             </button>
           </div>
           {c.industry && <div className="text-xs font-medium text-primary">{c.industry}</div>}
@@ -145,7 +145,7 @@ const ParentCompanyCard = ({ c, children }: { c: any; children: any[] }) => {
       </div>
       {open && (
         <div className="border-t border-border bg-muted/30 px-5 py-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {children.map((ch: any) => (
+          {subs.map((ch: any) => (
             <Link key={ch.id} to={`/companies/${ch.slug}`} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 hover:shadow-card hover:-translate-y-0.5 transition">
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-secondary text-base">{ch.logo_emoji || "🏢"}</div>
               <div className="min-w-0">
