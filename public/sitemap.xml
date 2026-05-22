@@ -141,6 +141,21 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://everycareerneeds.tech/companies/allina-health</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://everycareerneeds.tech/companies/north-memorial-health</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://everycareerneeds.tech/companies/va-mn</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://everycareerneeds.tech/companies/mercy-regional-hospital</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -157,11 +172,6 @@
   </url>
   <url>
     <loc>https://everycareerneeds.tech/companies/northstar-it-solutions</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://everycareerneeds.tech/companies/allina-health</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -191,7 +201,12 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://everycareerneeds.tech/companies/north-memorial-health</loc>
+    <loc>https://everycareerneeds.tech/companies/ch-robinson</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://everycareerneeds.tech/companies/treasure-island-resort</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -456,11 +471,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://everycareerneeds.tech/companies/va-mn</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://everycareerneeds.tech/companies/ssa-mn</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -552,16 +562,6 @@
   </url>
   <url>
     <loc>https://everycareerneeds.tech/companies/fairview-health-services</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://everycareerneeds.tech/companies/ch-robinson</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://everycareerneeds.tech/companies/treasure-island-resort</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
