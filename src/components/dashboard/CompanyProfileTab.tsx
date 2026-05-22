@@ -12,7 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { COMPANY_SIZES } from "./enums";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 
 const COMPANY_SIZE_NONE = "__unset__";
 
@@ -20,6 +20,8 @@ export function CompanyProfileTab({ company }: { company: any }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     // existing
@@ -46,6 +48,7 @@ export function CompanyProfileTab({ company }: { company: any }) {
   useEffect(() => {
     if (!company) return;
     const loc = company.company_locations?.find((l: any) => l.is_primary) ?? company.company_locations?.[0];
+    setLogoUrl(company.logo_url ?? null);
     setForm({
       name: company.name ?? "",
       description: company.description ?? "",
@@ -87,6 +90,7 @@ export function CompanyProfileTab({ company }: { company: any }) {
         industry: form.industry.trim() || null,
         website: form.website.trim() || null,
         logo_emoji: form.logo_emoji.trim() || "🏢",
+        logo_url: logoUrl,
         tagline: form.tagline.trim() || null,
         cs_ai_description: form.cs_ai_description.trim() || null,
         public_careers_url: form.public_careers_url.trim() || null,
