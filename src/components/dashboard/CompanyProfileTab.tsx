@@ -154,8 +154,62 @@ export function CompanyProfileTab({ company }: { company: any }) {
               <Label htmlFor="website">Website</Label>
               <Input id="website" type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://acme.com" />
             </div>
+            <div className="md:col-span-2">
+              <Label>Logo</Label>
+              <div className="flex items-center gap-4 mt-1.5">
+                <div className="grid h-16 w-16 place-items-center rounded-lg border border-border bg-surface overflow-hidden text-3xl">
+                  {logoUrl
+                    ? <img src={logoUrl} alt="Company logo" className="h-full w-full object-contain" />
+                    : <span>{form.logo_emoji || "🏢"}</span>}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button asChild size="sm" variant="outline" disabled={uploadingLogo}>
+                      <label className="cursor-pointer">
+                        {uploadingLogo
+                          ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />Uploading…</>
+                          : <><Upload className="h-3.5 w-3.5 mr-1.5" />Upload logo</>}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = "";
+                            if (!file || !user) return;
+                            if (file.size > 2 * 1024 * 1024) { toast.error("Logo must be 2MB or less"); return; }
+                            setUploadingLogo(true);
+                            try {
+                              const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+                              const path = `${user.id}/${company.id}-${Date.now()}.${ext}`;
+                              const { error: upErr } = await supabase.storage
+                                .from("company-logos")
+                                .upload(path, file, { upsert: true, contentType: file.type });
+                              if (upErr) throw upErr;
+                              const { data } = supabase.storage.from("company-logos").getPublicUrl(path);
+                              setLogoUrl(data.publicUrl);
+                              toast.success("Logo uploaded — remember to save");
+                            } catch (err: any) {
+                              toast.error(err.message ?? "Upload failed");
+                            } finally {
+                              setUploadingLogo(false);
+                            }
+                          }}
+                        />
+                      </label>
+                    </Button>
+                    {logoUrl && (
+                      <Button size="sm" variant="ghost" onClick={() => setLogoUrl(null)}>
+                        <X className="h-3.5 w-3.5 mr-1.5" />Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">PNG, JPG, WebP or SVG. Max 2MB. Falls back to the emoji if no logo is uploaded.</p>
+                </div>
+              </div>
+            </div>
             <div>
-              <Label htmlFor="logo_emoji">Logo emoji</Label>
+              <Label htmlFor="logo_emoji">Logo emoji (fallback)</Label>
               <Input id="logo_emoji" maxLength={4} value={form.logo_emoji} onChange={(e) => setForm({ ...form, logo_emoji: e.target.value })} />
             </div>
             <div className="grid grid-cols-[1fr_120px] gap-3">
