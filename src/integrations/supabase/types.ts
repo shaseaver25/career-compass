@@ -132,6 +132,67 @@ export type Database = {
           },
         ]
       }
+      analytics_events: {
+        Row: {
+          anonymous_session_id: string | null
+          company_id: string | null
+          created_at: string
+          event_name: string
+          id: string
+          interview_id: string | null
+          metadata: Json
+          opportunity_id: string | null
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          anonymous_session_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          event_name: string
+          id?: string
+          interview_id?: string | null
+          metadata?: Json
+          opportunity_id?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          anonymous_session_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          event_name?: string
+          id?: string
+          interview_id?: string | null
+          metadata?: Json
+          opportunity_id?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "interviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -402,57 +463,105 @@ export type Database = {
       }
       companies: {
         Row: {
+          attestation_minor_safety: boolean
+          attestation_terms: boolean
           created_at: string
+          cs_ai_description: string | null
           deed_rank: number | null
           description: string | null
+          hq_city: string | null
+          hq_state: string | null
           id: string
           industry: string | null
+          internal_contact_email: string | null
+          internal_contact_name: string | null
+          internal_contact_phone: string | null
+          last_verified_date: string | null
           logo_emoji: string | null
           logo_url: string | null
           mn_employees: number | null
           name: string
           owner_id: string | null
           parent_company_id: string | null
+          public_careers_url: string | null
+          published_at: string | null
+          school_relations_contact_email: string | null
+          school_relations_contact_name: string | null
+          size: Database["public"]["Enums"]["company_size"] | null
           slug: string
           source: string | null
           status: Database["public"]["Enums"]["content_status"]
+          tagline: string | null
           updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
           website: string | null
         }
         Insert: {
+          attestation_minor_safety?: boolean
+          attestation_terms?: boolean
           created_at?: string
+          cs_ai_description?: string | null
           deed_rank?: number | null
           description?: string | null
+          hq_city?: string | null
+          hq_state?: string | null
           id?: string
           industry?: string | null
+          internal_contact_email?: string | null
+          internal_contact_name?: string | null
+          internal_contact_phone?: string | null
+          last_verified_date?: string | null
           logo_emoji?: string | null
           logo_url?: string | null
           mn_employees?: number | null
           name: string
           owner_id?: string | null
           parent_company_id?: string | null
+          public_careers_url?: string | null
+          published_at?: string | null
+          school_relations_contact_email?: string | null
+          school_relations_contact_name?: string | null
+          size?: Database["public"]["Enums"]["company_size"] | null
           slug: string
           source?: string | null
           status?: Database["public"]["Enums"]["content_status"]
+          tagline?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
           website?: string | null
         }
         Update: {
+          attestation_minor_safety?: boolean
+          attestation_terms?: boolean
           created_at?: string
+          cs_ai_description?: string | null
           deed_rank?: number | null
           description?: string | null
+          hq_city?: string | null
+          hq_state?: string | null
           id?: string
           industry?: string | null
+          internal_contact_email?: string | null
+          internal_contact_name?: string | null
+          internal_contact_phone?: string | null
+          last_verified_date?: string | null
           logo_emoji?: string | null
           logo_url?: string | null
           mn_employees?: number | null
           name?: string
           owner_id?: string | null
           parent_company_id?: string | null
+          public_careers_url?: string | null
+          published_at?: string | null
+          school_relations_contact_email?: string | null
+          school_relations_contact_name?: string | null
+          size?: Database["public"]["Enums"]["company_size"] | null
           slug?: string
           source?: string | null
           status?: Database["public"]["Enums"]["content_status"]
+          tagline?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
           website?: string | null
         }
         Relationships: [
@@ -742,39 +851,73 @@ export type Database = {
       interviews: {
         Row: {
           audio_url: string | null
+          background_blurb: string | null
+          captions_status: Database["public"]["Enums"]["captions_status"] | null
           career_id: string | null
           company_id: string
           created_at: string
           created_by: string | null
+          display_order: number
+          duration_seconds: number | null
+          featured: boolean
           id: string
           interviewee_name: string
           interviewee_role: string
+          key_topics: Database["public"]["Enums"]["interview_topic"][] | null
           status: Database["public"]["Enums"]["content_status"]
+          thumbnail_url: string | null
+          transcript_text: string | null
           updated_at: string
+          video_url: string | null
+          years_at_company: number | null
         }
         Insert: {
           audio_url?: string | null
+          background_blurb?: string | null
+          captions_status?:
+            | Database["public"]["Enums"]["captions_status"]
+            | null
           career_id?: string | null
           company_id: string
           created_at?: string
           created_by?: string | null
+          display_order?: number
+          duration_seconds?: number | null
+          featured?: boolean
           id?: string
           interviewee_name: string
           interviewee_role: string
+          key_topics?: Database["public"]["Enums"]["interview_topic"][] | null
           status?: Database["public"]["Enums"]["content_status"]
+          thumbnail_url?: string | null
+          transcript_text?: string | null
           updated_at?: string
+          video_url?: string | null
+          years_at_company?: number | null
         }
         Update: {
           audio_url?: string | null
+          background_blurb?: string | null
+          captions_status?:
+            | Database["public"]["Enums"]["captions_status"]
+            | null
           career_id?: string | null
           company_id?: string
           created_at?: string
           created_by?: string | null
+          display_order?: number
+          duration_seconds?: number | null
+          featured?: boolean
           id?: string
           interviewee_name?: string
           interviewee_role?: string
+          key_topics?: Database["public"]["Enums"]["interview_topic"][] | null
           status?: Database["public"]["Enums"]["content_status"]
+          thumbnail_url?: string | null
+          transcript_text?: string | null
           updated_at?: string
+          video_url?: string | null
+          years_at_company?: number | null
         }
         Relationships: [
           {
@@ -832,6 +975,137 @@ export type Database = {
           region_label?: string
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          application_deadline: string | null
+          application_url: string
+          company_id: string
+          compensation: string | null
+          created_at: string
+          description: string
+          duration: string
+          expires_at: string
+          format: Database["public"]["Enums"]["work_format"]
+          grade_level_eligibility: Database["public"]["Enums"]["grade_level"][]
+          hours_per_week_max: number | null
+          hours_per_week_min: number | null
+          id: string
+          location_city: string | null
+          location_state: string | null
+          owner_id: string | null
+          paid: boolean
+          positions_available: number | null
+          preferred_skills: string[]
+          requirements: string[]
+          responsibilities: string[]
+          start_date: string | null
+          status: Database["public"]["Enums"]["opportunity_status"]
+          title: string
+          type: Database["public"]["Enums"]["opportunity_type"]
+          updated_at: string
+        }
+        Insert: {
+          application_deadline?: string | null
+          application_url: string
+          company_id: string
+          compensation?: string | null
+          created_at?: string
+          description: string
+          duration: string
+          expires_at?: string
+          format: Database["public"]["Enums"]["work_format"]
+          grade_level_eligibility: Database["public"]["Enums"]["grade_level"][]
+          hours_per_week_max?: number | null
+          hours_per_week_min?: number | null
+          id?: string
+          location_city?: string | null
+          location_state?: string | null
+          owner_id?: string | null
+          paid: boolean
+          positions_available?: number | null
+          preferred_skills?: string[]
+          requirements?: string[]
+          responsibilities?: string[]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["opportunity_status"]
+          title: string
+          type: Database["public"]["Enums"]["opportunity_type"]
+          updated_at?: string
+        }
+        Update: {
+          application_deadline?: string | null
+          application_url?: string
+          company_id?: string
+          compensation?: string | null
+          created_at?: string
+          description?: string
+          duration?: string
+          expires_at?: string
+          format?: Database["public"]["Enums"]["work_format"]
+          grade_level_eligibility?: Database["public"]["Enums"]["grade_level"][]
+          hours_per_week_max?: number | null
+          hours_per_week_min?: number | null
+          id?: string
+          location_city?: string | null
+          location_state?: string | null
+          owner_id?: string | null
+          paid?: boolean
+          positions_available?: number | null
+          preferred_skills?: string[]
+          requirements?: string[]
+          responsibilities?: string[]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["opportunity_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["opportunity_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_sub_cluster_tags: {
+        Row: {
+          created_at: string
+          is_primary: boolean
+          opportunity_id: string
+          sub_cluster_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_primary?: boolean
+          opportunity_id: string
+          sub_cluster_id: string
+        }
+        Update: {
+          created_at?: string
+          is_primary?: boolean
+          opportunity_id?: string
+          sub_cluster_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_sub_cluster_tags_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_sub_cluster_tags_sub_cluster_id_fkey"
+            columns: ["sub_cluster_id"]
+            isOneToOne: false
+            referencedRelation: "acte_sub_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pathway_steps: {
         Row: {
@@ -904,6 +1178,106 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      school_partnerships: {
+        Row: {
+          city: string
+          company_id: string
+          created_at: string
+          id: string
+          relationship_types: Database["public"]["Enums"]["relationship_type"][]
+          school_name: string
+          school_type: Database["public"]["Enums"]["school_type"]
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          company_id: string
+          created_at?: string
+          id?: string
+          relationship_types: Database["public"]["Enums"]["relationship_type"][]
+          school_name: string
+          school_type: Database["public"]["Enums"]["school_type"]
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          relationship_types?: Database["public"]["Enums"]["relationship_type"][]
+          school_name?: string
+          school_type?: Database["public"]["Enums"]["school_type"]
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_partnerships_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          company_id: string
+          consent_on_file: boolean
+          created_at: string
+          display_order: number
+          id: string
+          linkedin_url: string | null
+          person_name: string
+          photo_url: string | null
+          quote: string
+          role_held: string
+          school_or_program: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          company_id: string
+          consent_on_file?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          linkedin_url?: string | null
+          person_name: string
+          photo_url?: string | null
+          quote: string
+          role_held: string
+          school_or_program: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          company_id?: string
+          consent_on_file?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          linkedin_url?: string | null
+          person_name?: string
+          photo_url?: string | null
+          quote?: string
+          role_held?: string
+          school_or_program?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1039,10 +1413,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       subcluster_id: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "company_rep" | "user"
+      captions_status: "yt_auto" | "vtt_uploaded" | "manual_review_done"
+      company_size: "1-10" | "11-50" | "51-200" | "201-1000" | "1000+"
       content_status: "draft" | "pending" | "published" | "changes_requested"
       education_level:
         | "high_school"
@@ -1050,9 +1428,46 @@ export type Database = {
         | "associate"
         | "bachelor"
         | "graduate"
+      grade_level:
+        | "grade_9"
+        | "grade_10"
+        | "grade_11"
+        | "grade_12"
+        | "college_freshman"
+        | "college_sophomore"
+        | "college_junior"
+        | "college_senior"
+        | "recent_graduate"
       growth_outlook: "declining" | "stable" | "growing" | "high_growth"
+      interview_topic:
+        | "day_in_the_life"
+        | "career_path"
+        | "how_i_got_hired"
+        | "skills_i_use"
+        | "advice_for_students"
+      opportunity_status: "draft" | "active" | "expired" | "filled" | "archived"
+      opportunity_type:
+        | "internship"
+        | "apprenticeship"
+        | "job_shadow"
+        | "externship"
+        | "fellowship"
+        | "entry_level"
       pathway_step_type: "course" | "certification" | "degree" | "experience"
+      relationship_type:
+        | "hiring_pipeline"
+        | "curriculum_partner"
+        | "guest_speakers"
+        | "equipment_donation"
+        | "internship_host"
+      school_type:
+        | "high_school"
+        | "two_year_college"
+        | "four_year_college"
+        | "technical_college"
+      verification_status: "unverified" | "verified" | "flagged"
       video_provider: "youtube" | "vimeo"
+      work_format: "in_person" | "remote" | "hybrid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1181,6 +1596,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "company_rep", "user"],
+      captions_status: ["yt_auto", "vtt_uploaded", "manual_review_done"],
+      company_size: ["1-10", "11-50", "51-200", "201-1000", "1000+"],
       content_status: ["draft", "pending", "published", "changes_requested"],
       education_level: [
         "high_school",
@@ -1189,9 +1606,51 @@ export const Constants = {
         "bachelor",
         "graduate",
       ],
+      grade_level: [
+        "grade_9",
+        "grade_10",
+        "grade_11",
+        "grade_12",
+        "college_freshman",
+        "college_sophomore",
+        "college_junior",
+        "college_senior",
+        "recent_graduate",
+      ],
       growth_outlook: ["declining", "stable", "growing", "high_growth"],
+      interview_topic: [
+        "day_in_the_life",
+        "career_path",
+        "how_i_got_hired",
+        "skills_i_use",
+        "advice_for_students",
+      ],
+      opportunity_status: ["draft", "active", "expired", "filled", "archived"],
+      opportunity_type: [
+        "internship",
+        "apprenticeship",
+        "job_shadow",
+        "externship",
+        "fellowship",
+        "entry_level",
+      ],
       pathway_step_type: ["course", "certification", "degree", "experience"],
+      relationship_type: [
+        "hiring_pipeline",
+        "curriculum_partner",
+        "guest_speakers",
+        "equipment_donation",
+        "internship_host",
+      ],
+      school_type: [
+        "high_school",
+        "two_year_college",
+        "four_year_college",
+        "technical_college",
+      ],
+      verification_status: ["unverified", "verified", "flagged"],
       video_provider: ["youtube", "vimeo"],
+      work_format: ["in_person", "remote", "hybrid"],
     },
   },
 } as const

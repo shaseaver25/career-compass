@@ -1,0 +1,3 @@
+-- Proposed alternate schema (NOT APPLIED) — received 2026-05-22.
+-- Conflicts with live schema (different enums, table shapes). Kept for reference only.
+-- See live schema in supabase/migrations/.
