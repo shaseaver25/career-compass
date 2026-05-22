@@ -50,7 +50,7 @@ export function InterviewsTab({ companyId }: { companyId: string }) {
                   {i.video_url && <Badge variant="outline">Video</Badge>}
                   {i.audio_url && <Badge variant="outline">Audio</Badge>}
                   {(i.key_topics ?? []).slice(0, 3).map((t: string) => (
-                    <Badge key={t} variant="outline">{t.replaceAll("_", " ")}</Badge>
+                    <Badge key={t} variant="outline">{t.replace(/_/g, " ")}</Badge>
                   ))}
                 </div>
               </div>
