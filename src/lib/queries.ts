@@ -132,7 +132,16 @@ export async function fetchCareerBySlug(slug: string) {
 }
 
 export async function fetchCompanyBySlug(slug: string) {
-  const { data: company, error } = await supabase.from("companies").select("*, company_locations(*)").eq("slug", slug).eq("status", "published").maybeSingle();
+  // Note: sensitive internal/school-relations contact columns are intentionally
+  // omitted here — they are revoked from the anon role and only the owner needs them.
+  const { data: company, error } = await supabase
+    .from("companies")
+    .select(
+      "id, owner_id, slug, name, description, industry, website, logo_url, logo_emoji, status, created_at, updated_at, mn_employees, deed_rank, source, parent_company_id, tagline, cs_ai_description, hq_city, hq_state, public_careers_url, verification_status, last_verified_date, size, published_at, company_locations(*)"
+    )
+    .eq("slug", slug)
+    .eq("status", "published")
+    .maybeSingle();
   if (error) throw error;
   if (!company) return null;
   const [{ data: videos }, { data: links }, { data: interviews }, parentRes, childrenRes] = await Promise.all([
