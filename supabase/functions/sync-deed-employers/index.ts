@@ -84,44 +84,59 @@ Deno.serve(async (req) => {
       .select("organization, mn_employees, rank, business_description, removed_from_source");
     const existingMap = new Map((existing ?? []).map((e: any) => [e.organization, e]));
 
+    const now = new Date().toISOString();
     let added = 0, updated = 0, unchanged = 0;
     const seen = new Set<string>();
+    const upserts: any[] = [];
 
     for (const emp of employers) {
       seen.add(emp.organization);
       const found: any = existingMap.get(emp.organization);
+      const row = {
+        ...emp,
+        last_seen_at: now,
+        removed_from_source: false,
+        source_last_modified: lastModified,
+      };
       if (!found) {
-        await sb.from("deed_employers").insert({ ...emp, source_last_modified: lastModified });
         added++;
+        upserts.push(row);
       } else {
         const changed =
           found.mn_employees !== emp.mn_employees ||
           found.rank !== emp.rank ||
           found.business_description !== emp.business_description ||
           found.removed_from_source;
-        if (changed) {
-          await sb.from("deed_employers").update({
-            ...emp,
-            last_seen_at: new Date().toISOString(),
-            removed_from_source: false,
-            source_last_modified: lastModified,
-          }).eq("organization", emp.organization);
-          updated++;
-        } else {
-          await sb.from("deed_employers").update({ last_seen_at: new Date().toISOString() })
-            .eq("organization", emp.organization);
-          unchanged++;
-        }
+        if (changed) updated++;
+        else unchanged++;
+        upserts.push(row);
       }
     }
 
-    let removed = 0;
+    // Bulk upsert in chunks
+    const CHUNK = 500;
+    for (let i = 0; i < upserts.length; i += CHUNK) {
+      const { error } = await sb
+        .from("deed_employers")
+        .upsert(upserts.slice(i, i + CHUNK), { onConflict: "organization" });
+      if (error) throw error;
+    }
+
+    // Bulk mark removed
+    const toRemove: string[] = [];
     for (const org of existingMap.keys()) {
-      if (!seen.has(org)) {
-        const { data } = await sb.from("deed_employers").update({ removed_from_source: true })
-          .eq("organization", org).eq("removed_from_source", false).select("organization");
-        if (data && data.length > 0) removed++;
+      if (!seen.has(org) && !(existingMap.get(org) as any).removed_from_source) {
+        toRemove.push(org);
       }
+    }
+    let removed = 0;
+    if (toRemove.length > 0) {
+      const { data } = await sb
+        .from("deed_employers")
+        .update({ removed_from_source: true })
+        .in("organization", toRemove)
+        .select("organization");
+      removed = data?.length ?? 0;
     }
 
     await sb.from("deed_sync_log").insert({
