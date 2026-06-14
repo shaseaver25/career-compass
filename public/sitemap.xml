@@ -141,6 +141,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://everycareerneeds.tech/companies/realpath-learning-oxet</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://everycareerneeds.tech/companies/allina-health</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -532,11 +537,6 @@
   </url>
   <url>
     <loc>https://everycareerneeds.tech/companies/mn-it-services</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://everycareerneeds.tech/companies/realpath-learning-oxet</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
