@@ -21,11 +21,8 @@ export const SiteHeader = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="container flex h-16 items-center gap-6">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <span className="grid h-9 w-9 place-items-center rounded-xl gradient-hero text-primary-foreground shadow-elevated">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <span>CTE <span className="text-primary">Careers</span></span>
+        <Link to="/" className="flex items-center">
+          <img src={logoAsset.url} alt="RealPath Learning" className="h-9 w-auto" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
