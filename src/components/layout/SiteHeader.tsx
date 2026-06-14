@@ -1,10 +1,11 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Briefcase, Building2, Menu, Sparkles, User2 } from "lucide-react";
+import { Bookmark, Briefcase, Building2, Menu, User2 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import logoAsset from "@/assets/realpath_logo.png.asset.json";
 
 const links = [
   { to: "/careers", label: "Careers", icon: Briefcase },
