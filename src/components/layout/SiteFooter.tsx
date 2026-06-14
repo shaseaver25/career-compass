@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
+import logoAsset from "@/assets/realpath_logo.png.asset.json";
 
 export const SiteFooter = () => (
   <footer className="border-t border-border/60 mt-20 bg-surface">
     <div className="container py-10 grid gap-6 md:grid-cols-4 text-sm">
       <div>
-        <div className="font-bold text-lg mb-2">CTE <span className="text-primary">Careers</span></div>
+        <img src={logoAsset.url} alt="RealPath Learning" className="h-8 w-auto mb-2" />
         <p className="text-muted-foreground">Helping students see real careers and the local companies that hire for them.</p>
       </div>
       <div>
