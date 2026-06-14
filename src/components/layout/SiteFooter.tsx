@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logoAsset from "@/assets/realpath_logo.png.asset.json";
 
 export const SiteFooter = () => (
   <footer className="border-t border-border/60 mt-20 bg-surface">
